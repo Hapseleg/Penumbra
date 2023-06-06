@@ -21,6 +21,7 @@ public class ModPanelTabBar
         Conflicts,
         Collections,
         Edit,
+        TagFeature,
     };
 
     public readonly  ModPanelSettingsTab     Settings;
@@ -29,6 +30,9 @@ public class ModPanelTabBar
     public readonly  ModPanelConflictsTab    Conflicts;
     public readonly  ModPanelChangedItemsTab ChangedItems;
     public readonly  ModPanelEditTab         Edit;
+
+    public readonly  ModPanelTagsFeatureTab  TagFeature;
+
     private readonly ModEditWindow           _modEditWindow;
     private readonly ModManager              _modManager;
     private readonly TutorialService         _tutorial;
@@ -38,7 +42,7 @@ public class ModPanelTabBar
     private         Mod?            _lastMod      = null;
 
     public ModPanelTabBar(ModEditWindow modEditWindow, ModPanelSettingsTab settings, ModPanelDescriptionTab description,
-        ModPanelConflictsTab conflicts, ModPanelChangedItemsTab changedItems, ModPanelEditTab edit, ModManager modManager,
+        ModPanelConflictsTab conflicts, ModPanelChangedItemsTab changedItems, ModPanelEditTab edit, ModPanelTagsFeatureTab tagFeatureTab, ModManager modManager,
         TutorialService tutorial, ModPanelCollectionsTab collections)
     {
         _modEditWindow = modEditWindow;
@@ -47,6 +51,7 @@ public class ModPanelTabBar
         Conflicts      = conflicts;
         ChangedItems   = changedItems;
         Edit           = edit;
+        TagFeature = tagFeatureTab;
         _modManager    = modManager;
         _tutorial      = tutorial;
         Collections    = collections;
@@ -59,6 +64,7 @@ public class ModPanelTabBar
             ChangedItems,
             Collections,
             Edit,
+            TagFeature,
         };
     }
 
@@ -89,6 +95,7 @@ public class ModPanelTabBar
             ModPanelTabType.Conflicts    => Conflicts.Label,
             ModPanelTabType.Collections  => Collections.Label,
             ModPanelTabType.Edit         => Edit.Label,
+            ModPanelTabType.TagFeature   => TagFeature.Label,
             _                            => ReadOnlySpan<byte>.Empty,
         };
 
@@ -106,6 +113,8 @@ public class ModPanelTabBar
             return ModPanelTabType.Collections;
         if (label == Edit.Label)
             return ModPanelTabType.Edit;
+        if (label == TagFeature.Label)
+            return ModPanelTabType.TagFeature;
 
         return 0;
     }
