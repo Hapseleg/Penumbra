@@ -4,17 +4,13 @@ using ImGuiNET;
 using OtterGui.Raii;
 using OtterGui;
 using OtterGui.Widgets;
-using Penumbra.Mods;
 using Penumbra.Mods.Manager;
-using Penumbra.UI.Classes;
-using System.Diagnostics;
-using System.IO;
 using System.Numerics;
 using System.Collections.Generic;
 using Dalamud.Logging;
-using Dalamud.Interface.Internal.Notifications;
-using Dalamud.Interface.Components;
+using System.Linq;
 using Penumbra.Collections;
+using Penumbra.UI.Classes;
 
 namespace Penumbra.UI.ModsTab;
 
@@ -25,7 +21,7 @@ public class ModPanelTagsFeatureTab : ITab
     private readonly ModManager _modManager;
     private readonly TagButtons _localTags = new();
     private List<List<string>> _tagsList = new();
-    private Dictionary<string, bool> _tagDict = new();
+    //private Dictionary<string, bool> _tagDict = new();
     private List<string> _selectedTags = new();
 
     public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager)
@@ -46,7 +42,7 @@ public class ModPanelTagsFeatureTab : ITab
         var tagIdx = _localTags.Draw("Local Tags: ",
             "Custom tags you can set personally that will not be exported to the mod data but only set for you.\n"
           + "If the mod already contains a local tag in its own tags, the local tag will be ignored.", _selector.Selected!.LocalTags,
-            out var editedTag,false);
+            out var editedTag, false);
         _tutorial.OpenTutorial(BasicTutorialSteps.Tags);
         if (tagIdx >= 0)
             _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, tagIdx, editedTag);
@@ -59,61 +55,66 @@ public class ModPanelTagsFeatureTab : ITab
         DrawButtons(_tagsList[4], "Gear Styles");
         DrawButtons(_tagsList[5], "Gear Material");
 
-        ImGui.Separator();
+        //ImGui.Separator();
+        //if (ImGui.Button("Save tags"))
+        //{
+        //    for (var i = 0; i < _selectedTags.Count; i++)
+        //    {
+        //        _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, i, _selectedTags[i]);
+        //    }
+        //    _selectedTags.Clear();
+        //}
+        //ImGui.SameLine();
+        //if (ImGui.Button("Print List"))
+        //    foreach (var s in _selectedTags)
+        //        PluginLog.Debug(s);
 
-        if (ImGui.Button("Save tags"))
-        {
-            for (var i = 0; i < _selectedTags.Count; i++)
-            {
-                _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, i, _selectedTags[i]);
-            }
-            _selectedTags.Clear();
-        }
-        ImGui.SameLine();
-        if (ImGui.Button("Print List"))
-            foreach (var s in _selectedTags)
-                PluginLog.Debug(s);
+        //int current = 0;
+        //ImGui.ListBox("Selected Tags", ref current, _selectedTags.ToArray(), _selectedTags.Count);
 
-        int current = 0;
-        ImGui.ListBox("Selected Tags", ref current, _selectedTags.ToArray(), _selectedTags.Count);
 
-        
     }
 
     private void DrawButtons(List<string> tags, string title)
     {
-        //PluginLog.Debug("draw");
         ImGui.Text(title);
-
-        //for(var i= 0; i<tags.Count; i++)
-        //{
-        //    ImGui.Checkbox(tags[i], _tagDict. );
-        //}
-        //ImGui.PushStyleColor(ImGuiCol.Button, Colors.DiscordColor);
-
+        
         foreach (var tag in tags)
         {
-            //using (var color = ImRaii.PushColor(ImGuiCol.Button, Colors.DiscordColor))
-            //{
+            if (!_selector.Selected!.LocalTags.Contains(tag))
+            {
+                
                 if (ImGui.Button(tag))
                 {
-                    //PluginLog.Debug("foreach " + tag);
-                    if (!_selectedTags.Contains(tag))
-                    {
-
-                        _selectedTags.Add(tag);
-                    }
-                    else
-                    {
-                        //ImRaii.PushColor(ImGuiCol.Button, Colors.RedTableBgTint);
-                        _selectedTags.Remove(tag);
-                    }
-                    PluginLog.Debug(ImGui.GetID(tag).ToString());
+                    AddTag(tag, _selector.Selected!.LocalTags.Count);
                 }
+            }
+            else
+            {
+                var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                if (ImGui.Button(tag))
+                {
+                    RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                }
+                color.Pop();
+            }
             ImGui.SameLine();
-            //}
         }
         ImGui.Separator();
+    }
+
+    private void ColorButton()
+    {
+
+    }
+
+    private void AddTag(string tag, int tagIdx)
+    {
+        _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, tagIdx, tag);
+    }
+    private void RemoveTag(int tagIdx)
+    {
+        _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, tagIdx, "");
     }
 
     private static bool DebugTestButton(string name)
