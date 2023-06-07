@@ -78,12 +78,12 @@ public class ModPanelTagsFeatureTab : ITab
     private void DrawButtons(List<string> tags, string title)
     {
         ImGui.Text(title);
-        
+        //byte buttonsOnSameLine = 0;
         foreach (var tag in tags)
         {
             if (!_selector.Selected!.LocalTags.Contains(tag))
             {
-                
+
                 if (ImGui.Button(tag))
                 {
                     AddTag(tag, _selector.Selected!.LocalTags.Count);
@@ -99,6 +99,14 @@ public class ModPanelTagsFeatureTab : ITab
                 color.Pop();
             }
             ImGui.SameLine();
+            //buttonsOnSameLine++;
+            //if (buttonsOnSameLine >= 8)
+            //{
+            //    ImGui.NewLine();
+            //    buttonsOnSameLine = 0;
+            //}
+            //else
+            //    ImGui.SameLine();
         }
         ImGui.Separator();
     }
@@ -128,7 +136,8 @@ public class ModPanelTagsFeatureTab : ITab
         List<string> tagTypes = new List<string>
         {
             "NSFW",
-            "SFW"
+            "SFW",
+            "Dyable"
         };
         List<string> tagGenre = new List<string>
         {
@@ -152,27 +161,48 @@ public class ModPanelTagsFeatureTab : ITab
         };
         List<string> gearCategory = new List<string>
         {
-            "Underwear",
+            "Bondage",
             "Costume",
-            "Swimwear",
             "Dress",
+            "Garterbelt",
+            "Heels",
             "Lingerie",
-            "Bondage"
+            "Sandals",
+            "Skirt",
+            "Stockings",
+            "Swimwear",
+            "Underwear",
         };
         List<string> gearTags = new List<string>
         {
+            "BDSM",
+            "Casual",
+            "Chains",
             "Cute",
+            "Daily",
+            "Eastern",
             "Elegant",
+            "Fishnet",
+            "Party",
+            "Punk",
             "Scary",
-            "Casual"
+            "See-through",
+            "Sexy",
+            "Short/revealing",
+            "Special",
+            "Suggestive",
+            "Tight",
+
         };
         List<string> gearMaterial = new List<string>
         {
             "Cotton",
             "Leather",
-            "Metal",
             "Latex",
+            "Metal",
+            "Spandex"
         };
+
 
         _tagsList.Add(tagTypes);
         _tagsList.Add(tagGenre);
