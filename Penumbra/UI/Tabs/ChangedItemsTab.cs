@@ -10,6 +10,7 @@ using OtterGui.Widgets;
 using Penumbra.Api.Enums;
 using Penumbra.Collections.Manager;
 using Penumbra.Mods;
+using Penumbra.Services;
 using Penumbra.UI.Classes;
 
 namespace Penumbra.UI.Tabs;
@@ -19,17 +20,16 @@ public class ChangedItemsTab : ITab
     private readonly CollectionManager      _collectionManager;
     private readonly ChangedItemDrawer      _drawer;
     private readonly CollectionSelectHeader _collectionHeader;
-    private          ConfigTabBar?          _tabBar = null;
+    private readonly CommunicatorService    _communicator;
 
-    public ChangedItemsTab(CollectionManager collectionManager, CollectionSelectHeader collectionHeader, ChangedItemDrawer drawer)
+    public ChangedItemsTab(CollectionManager collectionManager, CollectionSelectHeader collectionHeader, ChangedItemDrawer drawer,
+        CommunicatorService communicator)
     {
         _collectionManager = collectionManager;
         _collectionHeader  = collectionHeader;
         _drawer            = drawer;
+        _communicator      = communicator;
     }
-
-    public void SetTabBar(ConfigTabBar tabBar)
-        => _tabBar = tabBar;
 
     public ReadOnlySpan<byte> Label
         => "Changed Items"u8;
@@ -40,6 +40,7 @@ public class ChangedItemsTab : ITab
     public void DrawContent()
     {
         _collectionHeader.Draw(true);
+        _drawer.DrawTypeFilter();
         var       varWidth = DrawFilters();
         using var child    = ImRaii.Child("##changedItemsChild", -Vector2.One);
         if (!child)
@@ -57,9 +58,7 @@ public class ChangedItemsTab : ITab
         ImGui.TableSetupColumn("id",    flags, 130 * UiHelpers.Scale);
 
         var items = _collectionManager.Active.Current.ChangedItems;
-        var rest = _changedItemFilter.IsEmpty && _changedItemModFilter.IsEmpty
-            ? ImGuiClip.ClippedDraw(items, skips, DrawChangedItemColumn, items.Count)
-            : ImGuiClip.FilteredClippedDraw(items, skips, FilterChangedItem, DrawChangedItemColumn);
+        var rest  = ImGuiClip.FilteredClippedDraw(items, skips, FilterChangedItem, DrawChangedItemColumn);
         ImGuiClip.DrawEndDummy(rest, height);
     }
 
@@ -79,26 +78,21 @@ public class ChangedItemsTab : ITab
 
     /// <summary> Apply the current filters. </summary>
     private bool FilterChangedItem(KeyValuePair<string, (SingleArray<IMod>, object?)> item)
-        => (_changedItemFilter.IsEmpty
-             || ChangedItemDrawer.ChangedItemFilterName(item.Key, item.Value.Item2)
-                    .Contains(_changedItemFilter.Lower, StringComparison.OrdinalIgnoreCase))
+        => _drawer.FilterChangedItem(item.Key, item.Value.Item2, _changedItemFilter)
          && (_changedItemModFilter.IsEmpty || item.Value.Item1.Any(m => m.Name.Contains(_changedItemModFilter)));
 
     /// <summary> Draw a full column for a changed item. </summary>
     private void DrawChangedItemColumn(KeyValuePair<string, (SingleArray<IMod>, object?)> item)
     {
         ImGui.TableNextColumn();
-        _drawer.DrawChangedItem(item.Key, item.Value.Item2, false);
+        _drawer.DrawCategoryIcon(item.Key, item.Value.Item2);
+        ImGui.SameLine();
+        _drawer.DrawChangedItem(item.Key, item.Value.Item2);
         ImGui.TableNextColumn();
         DrawModColumn(item.Value.Item1);
 
         ImGui.TableNextColumn();
-        if (!ChangedItemDrawer.GetChangedItemObject(item.Value.Item2, out var text))
-            return;
-
-        using var color = ImRaii.PushColor(ImGuiCol.Text, ColorId.ItemId.Value());
-        ImGui.AlignTextToFramePadding();
-        ImGuiUtil.RightAlign(text);
+        _drawer.DrawModelData(item.Value.Item2);
     }
 
     private void DrawModColumn(SingleArray<IMod> mods)
@@ -106,16 +100,12 @@ public class ChangedItemsTab : ITab
         if (mods.Count <= 0)
             return;
 
-        var       first   = mods[0];
+        var       first = mods[0];
         using var style = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0.5f));
         if (ImGui.Selectable(first.Name, false, ImGuiSelectableFlags.None, new Vector2(0, ImGui.GetFrameHeight()))
-            && ImGui.GetIO().KeyCtrl
-         && _tabBar != null
+         && ImGui.GetIO().KeyCtrl
          && first is Mod mod)
-        {
-            _tabBar.SelectTab      = TabType.Mods;
-            _tabBar.Mods.SelectMod = mod;
-        }
+            _communicator.SelectTab.Invoke(TabType.Mods, mod);
 
         if (ImGui.IsItemHovered())
         {
