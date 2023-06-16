@@ -30,9 +30,7 @@ public class ModPanelTabBar
     public readonly  ModPanelConflictsTab    Conflicts;
     public readonly  ModPanelChangedItemsTab ChangedItems;
     public readonly  ModPanelEditTab         Edit;
-
     public readonly  ModPanelTagsFeatureTab  TagFeature;
-
     private readonly ModEditWindow           _modEditWindow;
     private readonly ModManager              _modManager;
     private readonly TutorialService         _tutorial;
@@ -51,7 +49,7 @@ public class ModPanelTabBar
         Conflicts      = conflicts;
         ChangedItems   = changedItems;
         Edit           = edit;
-        TagFeature = tagFeatureTab;
+        TagFeature     = tagFeatureTab;
         _modManager    = modManager;
         _tutorial      = tutorial;
         Collections    = collections;

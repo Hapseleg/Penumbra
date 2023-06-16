@@ -9,21 +9,20 @@ using System.Collections.Generic;
 using Dalamud.Logging;
 using System.Linq;
 using Penumbra.UI.Classes;
+using Lumina.Excel.GeneratedSheets;
+using Dalamud.Interface;
 
 namespace Penumbra.UI.ModsTab;
 
 public class ModPanelTagsFeatureTab : ITab
 {
-    
+
     private readonly ModFileSystemSelector _selector;
     private readonly TutorialService _tutorial;
     private readonly ModManager _modManager;
     private readonly TagButtons _localTags = new();
-
     //Contains the tags
-    private List<List<string>> _tagsList = new();
-    //private Dictionary<string, bool> _tagDict = new();
-    //private List<string> _selectedTags = new();
+    private List<(string Name, List<string> Tags)> _tagsList = new();
 
     public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager)
     {
@@ -39,6 +38,38 @@ public class ModPanelTagsFeatureTab : ITab
 
     public void DrawContent()
     {
+        //int cur = 0;
+        //ImGui.ListBox("test", ref cur, _tagsList[0].Tags.ToArray(), _tagsList[0].Tags.Count);
+
+        //if (ImGui.TreeNode("Trees"))
+        //{
+        //    //IMGUI_DEMO_MARKER("Widgets/Trees/Basic trees");
+        //    if (ImGui.TreeNode("Basic trees"))
+        //    {
+        //        for (int i = 0; i < 5; i++)
+        //        {
+        //            // Use SetNextItemOpen() so set the default state of a node to be open. We could
+        //            // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+        //            if (i == 0)
+        //                ImGui.SetNextItemOpen(true, ImGuiCond.Once);
+
+        //            if (ImGui.TreeNode(i,"Child %d"))
+        //            {
+        //                ImGui.Text("blah blah");
+        //                ImGui.SameLine();
+        //                if (ImGui.SmallButton("button")) { }
+        //                ImGui.TreePop();
+        //            }
+        //        }
+        //        ImGui.TreePop();
+        //    }
+        //}
+
+
+
+
+
+        //-------------------------------------------------- Real stuff
         //Maybe remove this from the description tab?
         var tagIdx = _localTags.Draw("Local Tags: ",
             "Custom tags you can set personally that will not be exported to the mod data but only set for you.\n"
@@ -50,53 +81,44 @@ public class ModPanelTagsFeatureTab : ITab
 
 
         //Adds the buttons, right now the tags are just in a List that contains List<string>, I'd properly move the tags to a json file so its easier to add and remove tags, can also add a function so the users can add tags themselves
-        DrawButtons(_tagsList[0], "Type");
-        DrawButtons(_tagsList[1], "Genre");
-        DrawButtons(_tagsList[2], "Gear Types");
-        DrawButtons(_tagsList[3], "Gear Category");
-        DrawButtons(_tagsList[4], "Gear Styles");
-        DrawButtons(_tagsList[5], "Gear Material");
+        DrawButtons(_tagsList);
 
     }
 
 
-    private void DrawButtons(List<string> tags, string title)
+    private void DrawButtons(List<(string Name, List<string> Tags)> tagList)
     {
-        ImGui.Text(title);
-        //byte buttonsOnSameLine = 0;
-        foreach (var tag in tags)
+        foreach (var (name, tags) in tagList)
         {
-            //Checks if the mod does not have the tag
-            if (!_selector.Selected!.LocalTags.Contains(tag))
+            ImGui.TextUnformatted(name);
+            Console.WriteLine($"Name: {name}");
+
+            foreach (var tag in tags)
             {
-                //Clicking the button adds the tag to the localTags list
-                if (ImGui.Button(tag))
+                if (!_selector.Selected!.LocalTags.Contains(tag))
                 {
-                    AddTag(tag, _selector.Selected!.LocalTags.Count);
+                    //Clicking the button adds the tag to the localTags list
+                    if (ImGui.Button(tag))
+                    {
+                        AddTag(tag, _selector.Selected!.LocalTags.Count);
+                    }
                 }
-            }
-            //if it does we want to color the button so you can see its added, im pretty sure im using this wrong...?
-            else
-            {
-                var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                //Clicking the button removes the tag from the localTags list
-                if (ImGui.Button(tag))
+                else
                 {
-                    RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                    using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                    //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                    //Clicking the button removes the tag from the localTags list
+                    if (ImGui.Button(tag))
+                    {
+                        RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                    }
+                    //color.Pop();
                 }
-                color.Pop();
+                ImGui.SameLine();
             }
-            ImGui.SameLine();
-            //buttonsOnSameLine++;
-            //if (buttonsOnSameLine >= 8)
-            //{
-            //    ImGui.NewLine();
-            //    buttonsOnSameLine = 0;
-            //}
-            //else
-            //    ImGui.SameLine();
+            ImGui.Separator();
+            Console.WriteLine();
         }
-        ImGui.Separator();
     }
 
     //Adds tag to the mods json
@@ -111,20 +133,13 @@ public class ModPanelTagsFeatureTab : ITab
         _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, tagIdx, "");
     }
 
-    private static bool DebugTestButton(string name)
-    {
-        ImGui.Button("TEST: " + name);
-        return ImGui.IsItemClicked();
-    }
-
     //This is just a hacky test
     private void AddTagsToList()
     {
         List<string> tagTypes = new List<string>
         {
             "NSFW",
-            "SFW",
-            "Dyable"
+            "SFW"
         };
         List<string> tagGenre = new List<string>
         {
@@ -144,7 +159,6 @@ public class ModPanelTagsFeatureTab : ITab
             "Bracelet",
             "Ring",
             "Weapon",
-
         };
         List<string> gearCategory = new List<string>
         {
@@ -160,7 +174,7 @@ public class ModPanelTagsFeatureTab : ITab
             "Swimwear",
             "Underwear",
         };
-        List<string> gearTags = new List<string>
+        List<string> gearStyles = new List<string>
         {
             "BDSM",
             "Casual",
@@ -179,7 +193,6 @@ public class ModPanelTagsFeatureTab : ITab
             "Special",
             "Suggestive",
             "Tight",
-
         };
         List<string> gearMaterial = new List<string>
         {
@@ -190,22 +203,11 @@ public class ModPanelTagsFeatureTab : ITab
             "Spandex"
         };
 
-
-        _tagsList.Add(tagTypes);
-        _tagsList.Add(tagGenre);
-        _tagsList.Add(gearTagTypes);
-        _tagsList.Add(gearCategory);
-        _tagsList.Add(gearTags);
-        _tagsList.Add(gearMaterial);
+        _tagsList.Add(("Type", tagTypes));
+        _tagsList.Add(("Genre",tagGenre));
+        _tagsList.Add(("Gear Type",gearTagTypes));
+        _tagsList.Add(("Category",gearCategory));
+        _tagsList.Add(("Style",gearStyles));
+        _tagsList.Add(("Material",gearMaterial));
     }
-
-
-
-    private void tester()
-    {
-        ImGuiUtil.DrawTextButton("test", new Vector2(150 * UiHelpers.Scale, 0), 1);
-        PluginLog.Debug("tester");
-    }
-
-
 }
