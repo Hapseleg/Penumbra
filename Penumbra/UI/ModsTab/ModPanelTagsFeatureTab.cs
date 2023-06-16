@@ -59,26 +59,30 @@ public class ModPanelTagsFeatureTab : ITab
 
         if (ImGui.TreeNode("Personal Tags"))
         {
-            if (ImGui.BeginPopupContextItem())
+            AddContextForLeafs();
+            //if (ImGui.BeginPopupContextItem())
+            //{
+
+            //    ImGui.Text("Add new Category.");
+            //    ImGui.InputText("##edit", ref newTag, 128);
+
+            //    if (ImGui.Button("Add"))
+            //    {
+            //        _personalTagsTest.Add(newTag);
+            //        newTag = string.Empty;
+            //        ImGui.EndPopup();
+            //    }
+
+            //    ImGui.EndPopup();
+            //}
+
+            for (var i = 0; i < _personalTagsTest.Count; i++)
             {
                 
-                ImGui.Text("Add new Category.");
-                ImGui.InputText("##edit", ref newTag, 128);
 
-                if (ImGui.Button("Add"))
-                {
-                    _personalTagsTest.Add(newTag);
-                    newTag = string.Empty;
-                    ImGui.EndPopup();
-                }
-
-                ImGui.EndPopup();
-            }
-
-            for(var i = 0; i < _personalTagsTest.Count; i++)
-            {
                 if (ImGui.TreeNode(_personalTagsTest[i], _personalTagsTest[i]))
                 {
+                    //AddContextForLeafs();
                     //PluginLog.Debug(_personalTagsTest[i].ToString());
 
                     ImGui.TreePop();
@@ -112,73 +116,50 @@ public class ModPanelTagsFeatureTab : ITab
                 if (ImGui.TreeNode(name))
                 {
                     //bool[] selection = new bool[tags.Count];
-                    foreach (var tag in tags)
-                    {
-                        bool containsTag = _selector.Selected!.LocalTags.Contains(tag);
-
-                        //selection[selection.Length] = containsTag;
-                        if (ImGui.Selectable(tag, containsTag))
-                        {
-                            if (containsTag)
-                                RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
-                            else
-                                AddTag(tag);
-                        }
-                        //if (!_selector.Selected!.LocalTags.Contains(tag))
-                        //{
-                        //    //Clicking the button adds the tag to the localTags list
-                        //    if (ImGui.Button(tag))
-                        //    {
-                        //        AddTag(tag, _selector.Selected!.LocalTags.Count);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                        //    //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                        //    //Clicking the button removes the tag from the localTags list
-                        //    if (ImGui.Button(tag))
-                        //    {
-                        //        RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
-                        //    }
-                        //    //color.Pop();
-                        //}
-                        //ImGui.SameLine();
-                    }
                     //foreach (var tag in tags)
                     //{
-                    //    if (ImGui.TreeNode(tag))
-                    //    {
+                    //    bool containsTag = _selector.Selected!.LocalTags.Contains(tag);
 
-                    //        ImGui.TreePop();
+                    //    //selection[selection.Length] = containsTag;
+                    //    if (ImGui.Selectable(tag, containsTag))
+                    //    {
+                    //        if (containsTag)
+                    //            RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                    //        else
+                    //            AddTag(tag);
                     //    }
                     //}
+                    foreach (var tag in tags)
+                    {
+
+                        if (!_selector.Selected!.LocalTags.Contains(tag))
+                        {
+                            //Clicking the button adds the tag to the localTags list
+                            if (ImGui.Button(tag))
+                            {
+                                AddTag(tag);
+                            }
+                        }
+                        else
+                        {
+                            using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                            //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                            //Clicking the button removes the tag from the localTags list
+                            if (ImGui.Button(tag))
+                            {
+                                RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                            }
+                            //color.Pop();
+                        }
+                        //ImGui.Unindent(ImGui.GetTreeNodeToLabelSpacing());
+                        ImGui.SameLine();
+                        
+                        
+                    }
+                    ImGui.NewLine();
                     ImGui.TreePop();
                 }
             }
-
-            //IMGUI_DEMO_MARKER("Widgets/Trees/Basic trees");
-            //if (ImGui.TreeNode("Basic trees"))
-            //{
-
-            //    for (var i = 0; i < 5; i++)
-            //    {
-            //        // Use SetNextItemOpen() so set the default state of a node to be open. We could
-            //        // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
-            //        if (i == 0)
-            //            ImGui.SetNextItemOpen(true, ImGuiCond.Once);
-
-            //        if (ImGui.TreeNode(i, "Child %d"))
-            //        {
-            //            ImGui.Text("blah blah");
-            //            ImGui.SameLine();
-            //            for (var j = 0; j < 10; j++)
-            //                if (ImGui.SmallButton("button")) { }
-            //            ImGui.TreePop();
-            //        }
-            //    }
-            //    ImGui.TreePop();
-            //}
 
         }
 
@@ -202,6 +183,24 @@ public class ModPanelTagsFeatureTab : ITab
 
     }
 
+    private void AddContextForLeafs()
+    {
+        if (ImGui.BeginPopupContextItem())
+        {
+
+            ImGui.Text("Add new Category.");
+            ImGui.InputText("##edit", ref newTag, 128);
+
+            if (ImGui.Button("Add"))
+            {
+                _personalTagsTest.Add(newTag);
+                newTag = string.Empty;
+                ImGui.EndPopup();
+            }
+
+            ImGui.EndPopup();
+        }
+    }
 
     private void DrawButtons(List<(string Name, List<string> Tags)> tagList)
     {
