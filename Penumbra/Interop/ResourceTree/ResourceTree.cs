@@ -53,7 +53,7 @@ public class ResourceTree
             if (imcNode != null)
                 Nodes.Add(globalContext.WithNames ? imcNode.WithName(imcNode.Name ?? $"IMC #{i}") : imcNode);
 
-            var mdl     = (RenderModel*)model->ModelArray[i];
+            var mdl     = (RenderModel*)model->Models[i];
             var mdlNode = context.CreateNodeFromRenderModel(mdl);
             if (mdlNode != null)
                 Nodes.Add(globalContext.WithNames ? mdlNode.WithName(mdlNode.Name ?? $"Model #{i}") : mdlNode);
@@ -89,7 +89,7 @@ public class ResourceTree
                             ? imcNode.WithName(imcNode.Name ?? $"{subObjectNamePrefix} #{subObjectIndex}, IMC #{i}")
                             : imcNode);
 
-                    var mdl     = (RenderModel*)subObject->ModelArray[i];
+                    var mdl     = (RenderModel*)subObject->Models[i];
                     var mdlNode = subObjectContext.CreateNodeFromRenderModel(mdl);
                     if (mdlNode != null)
                         subObjectNodes.Add(globalContext.WithNames
