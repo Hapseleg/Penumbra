@@ -110,14 +110,13 @@ public class Configuration : IPluginConfiguration, ISavable
     /// Load the current configuration.
     /// Includes adding new colors and migrating from old versions.
     /// </summary>
-    public Configuration(CharacterUtility utility, FilenameService fileNames, ConfigMigrationService migrator, SaveService saveService)
+    public Configuration(CharacterUtility utility, ConfigMigrationService migrator, SaveService saveService)
     {
         _saveService = saveService;
-        Load(utility, fileNames, migrator);
-        UI.Classes.Colors.SetColors(this);
+        Load(utility, migrator);
     }
 
-    public void Load(CharacterUtility utility, FilenameService fileNames, ConfigMigrationService migrator)
+    public void Load(CharacterUtility utility, ConfigMigrationService migrator)
     {
         static void HandleDeserializationError(object? sender, ErrorEventArgs errorArgs)
         {
@@ -126,10 +125,10 @@ public class Configuration : IPluginConfiguration, ISavable
             errorArgs.ErrorContext.Handled = true;
         }
 
-        if (File.Exists(fileNames.ConfigFile))
+        if (File.Exists(_saveService.FileNames.ConfigFile))
             try
             {
-                var text = File.ReadAllText(fileNames.ConfigFile);
+                var text = File.ReadAllText(_saveService.FileNames.ConfigFile);
                 JsonConvert.PopulateObject(text, this, new JsonSerializerSettings
                 {
                     Error = HandleDeserializationError,
@@ -137,7 +136,7 @@ public class Configuration : IPluginConfiguration, ISavable
             }
             catch (Exception ex)
             {
-                Penumbra.ChatService.NotificationMessage(ex,
+                Penumbra.Chat.NotificationMessage(ex,
                     "Error reading Configuration, reverting to default.\nYou may be able to restore your configuration using the rolling backups in the XIVLauncher/backups/Penumbra directory.",
                     "Error reading Configuration", "Error", NotificationType.Error);
             }
