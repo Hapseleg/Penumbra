@@ -27,6 +27,7 @@ public class ModPanelTagsFeatureTab : ITab
     private List<(string Name, List<string> Tags)> _tagsList = new();
 
     private List<string> _personalTagsTest = new();
+    private List<string> _personalTagsTestButtons = new();
     private string newTag = string.Empty;
 
     public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager)
@@ -59,7 +60,7 @@ public class ModPanelTagsFeatureTab : ITab
 
         if (ImGui.TreeNode("Personal Tags"))
         {
-            AddContextForLeafs();
+            AddContextForLeafs(_personalTagsTest, ref newTag);
             //if (ImGui.BeginPopupContextItem())
             //{
 
@@ -82,6 +83,34 @@ public class ModPanelTagsFeatureTab : ITab
 
                 if (ImGui.TreeNode(_personalTagsTest[i], _personalTagsTest[i]))
                 {
+                    AddContextForLeafs(_personalTagsTestButtons, ref newTag);
+                    foreach (var tag in _personalTagsTestButtons)
+                    {
+
+                        if (!_selector.Selected!.LocalTags.Contains(tag))
+                        {
+                            //Clicking the button adds the tag to the localTags list
+                            if (ImGui.Button(tag))
+                            {
+                                AddTag(tag);
+                            }
+                        }
+                        else
+                        {
+                            using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                            //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
+                            //Clicking the button removes the tag from the localTags list
+                            if (ImGui.Button(tag))
+                            {
+                                RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
+                            }
+                            //color.Pop();
+                        }
+                        //ImGui.Unindent(ImGui.GetTreeNodeToLabelSpacing());
+                        ImGui.SameLine();
+
+
+                    }
                     //AddContextForLeafs();
                     //PluginLog.Debug(_personalTagsTest[i].ToString());
 
@@ -183,18 +212,18 @@ public class ModPanelTagsFeatureTab : ITab
 
     }
 
-    private void AddContextForLeafs()
+    private void AddContextForLeafs(List<string> tagList, ref string tag)
     {
         if (ImGui.BeginPopupContextItem())
         {
 
             ImGui.Text("Add new Category.");
-            ImGui.InputText("##edit", ref newTag, 128);
+            ImGui.InputText("##edit", ref tag, 128);
 
             if (ImGui.Button("Add"))
             {
-                _personalTagsTest.Add(newTag);
-                newTag = string.Empty;
+                tagList.Add(tag);
+                tag = string.Empty;
                 ImGui.EndPopup();
             }
 
