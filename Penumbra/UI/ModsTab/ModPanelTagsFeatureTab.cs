@@ -13,12 +13,15 @@ using Lumina.Excel.GeneratedSheets;
 using Dalamud.Interface;
 using System.Diagnostics;
 using Swan.Logging;
+using Penumbra.Mods;
+using System.Collections;
+using Microsoft.VisualBasic;
+using ImGuizmoNET;
 
 namespace Penumbra.UI.ModsTab;
 
 public class ModPanelTagsFeatureTab : ITab
 {
-
     private readonly ModFileSystemSelector _selector;
     private readonly TutorialService _tutorial;
     private readonly ModManager _modManager;
@@ -28,7 +31,7 @@ public class ModPanelTagsFeatureTab : ITab
 
     private List<string> _personalTagsTest = new();
     private List<string> _personalTagsTestButtons = new();
-    private string newTag = string.Empty;
+    private string _newTag = string.Empty;
 
     public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager)
     {
@@ -37,6 +40,7 @@ public class ModPanelTagsFeatureTab : ITab
         _modManager = modManager;
 
         //_personalTagsTest.Add("abe");
+        
         AddTagsToList();
     }
 
@@ -45,6 +49,11 @@ public class ModPanelTagsFeatureTab : ITab
 
     public void DrawContent()
     {
+        List<string> z = new List<string>() {"SFW","Head" };
+        //FilterModsByTags(_selector.)
+
+
+
         var tagIdx = _localTags.Draw("Local Tags: ",
             "Custom tags you can set personally that will not be exported to the mod data but only set for you.\n"
           + "If the mod already contains a local tag in its own tags, the local tag will be ignored.", _selector.Selected!.LocalTags,
@@ -60,7 +69,7 @@ public class ModPanelTagsFeatureTab : ITab
 
         if (ImGui.TreeNode("Personal Tags"))
         {
-            AddContextForLeafs(_personalTagsTest, ref newTag);
+            AddContextForLeafs(_personalTagsTest, ref _newTag);
             //if (ImGui.BeginPopupContextItem())
             //{
 
@@ -79,11 +88,9 @@ public class ModPanelTagsFeatureTab : ITab
 
             for (var i = 0; i < _personalTagsTest.Count; i++)
             {
-                
-
                 if (ImGui.TreeNode(_personalTagsTest[i], _personalTagsTest[i]))
                 {
-                    AddContextForLeafs(_personalTagsTestButtons, ref newTag);
+                    AddContextForLeafs(_personalTagsTestButtons, ref _newTag);
                     foreach (var tag in _personalTagsTestButtons)
                     {
 
@@ -355,4 +362,21 @@ public class ModPanelTagsFeatureTab : ITab
         _tagsList.Add(("Style", gearStyles));
         _tagsList.Add(("Material", gearMaterial));
     }
+
+    private List<Mod> FilterModsByTags(List<Mod> modList, List<string> tagList)
+    {
+        var filteredMods = new List<Mod>();
+        List<string> lowercaseStrings = tagList.Select(s => s.ToLower()).ToList();
+
+        foreach (var mod in modList)
+        {
+            bool containsAllElements = mod.LocalTags.Intersect(lowercaseStrings).Count() == mod.LocalTags.Count;
+            PluginLog.Debug(containsAllElements+"");
+
+        }
+        return filteredMods;
+    }
+
+
+
 }

@@ -1,10 +1,12 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Logging;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
@@ -19,6 +21,7 @@ using Penumbra.Mods;
 using Penumbra.Mods.Manager;
 using Penumbra.Services;
 using Penumbra.UI.Classes;
+using Swan;
 using ChatService = Penumbra.Services.ChatService;
 
 namespace Penumbra.UI.ModsTab;
@@ -520,6 +523,26 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     /// <summary> Apply the string filters. </summary>
     private bool ApplyStringFilters(ModFileSystem.Leaf leaf, Mod mod)
     {
+        if (_filterType == 4 && _modFilter.Lower.Contains(','))
+        {
+            Penumbra.Log.Debug("--------");
+            string[] t = _modFilter.Lower.Split(',');
+            var containsElements = false;
+            Penumbra.Log.Debug(t.Stringify());
+
+            
+            
+
+            foreach(string s in t)
+            {
+                //Lower case de der
+                Penumbra.Log.Debug("slower: "+ s.ToLower());
+                if (!mod.LocalTags.Contains(s.ToLower()))
+                    containsElements = true;
+            }
+            return containsElements;
+        }
+
         return _filterType switch
         {
             -1 => false,

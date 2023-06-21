@@ -8,7 +8,7 @@ namespace Penumbra.UI.ModsTab;
 public class ModPanel : IDisposable
 {
     private readonly ModFileSystemSelector       _selector;
-    private readonly ModEditWindow _editWindow;
+    private readonly ModEditWindow               _editWindow;
     private readonly ModPanelHeader              _header;
     private readonly ModPanelTabBar              _tabs;
 
