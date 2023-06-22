@@ -43,7 +43,7 @@ internal record class ResolveContext(Configuration Config, IObjectIdentifier Ide
 
             if (gamePath[lastDirectorySeparator + 1] != (byte)'-' || gamePath[lastDirectorySeparator + 2] != (byte)'-')
             {
-                Span<byte> prefixed = stackalloc byte[gamePath.Length + 3];
+                Span<byte> prefixed = stackalloc byte[gamePath.Length + 2];
                 gamePath.Span[..(lastDirectorySeparator + 1)].CopyTo(prefixed);
                 prefixed[lastDirectorySeparator + 1] = (byte)'-';
                 prefixed[lastDirectorySeparator + 2] = (byte)'-';
