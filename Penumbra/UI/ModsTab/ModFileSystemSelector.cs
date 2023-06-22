@@ -529,14 +529,17 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             string[] t = _modFilter.Lower.Split(',');
             var containsElements = false;
             Penumbra.Log.Debug(t.Stringify());
-            
-            
 
-            foreach(string s in t)
+            var mtags = mod.LocalTags.ToArray();
+            for( int i = 0; i < mtags.Length; i++)
             {
-                //Lower case de der
+                mtags[i] = mtags[i].ToLower();
+            }
+
+            foreach (string s in t)
+            {
                 Penumbra.Log.Debug("slower: "+ s.ToLower());
-                if (!mod.LocalTags.Contains(s.ToLower()))
+                if (!mtags.Contains(s))
                     containsElements = true;
             }
             return containsElements;
