@@ -4,19 +4,11 @@ using OtterGui.Raii;
 using OtterGui;
 using OtterGui.Widgets;
 using Penumbra.Mods.Manager;
-using System.Numerics;
 using System.Collections.Generic;
 using Dalamud.Logging;
 using System.Linq;
 using Penumbra.UI.Classes;
-using Lumina.Excel.GeneratedSheets;
-using Dalamud.Interface;
-using System.Diagnostics;
-using Swan.Logging;
 using Penumbra.Mods;
-using System.Collections;
-using Microsoft.VisualBasic;
-using ImGuizmoNET;
 
 namespace Penumbra.UI.ModsTab;
 
@@ -49,11 +41,6 @@ public class ModPanelTagsFeatureTab : ITab
 
     public void DrawContent()
     {
-        List<string> z = new List<string>() {"SFW","Head" };
-        //FilterModsByTags(_selector.)
-
-
-
         var tagIdx = _localTags.Draw("Local Tags: ",
             "Custom tags you can set personally that will not be exported to the mod data but only set for you.\n"
           + "If the mod already contains a local tag in its own tags, the local tag will be ignored.", _selector.Selected!.LocalTags,

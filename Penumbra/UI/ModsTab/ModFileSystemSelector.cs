@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -8,6 +9,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Logging;
 using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Filesystem;
@@ -17,6 +19,8 @@ using Penumbra.Api.Enums;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
 using Penumbra.Communication;
+using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 using Penumbra.Mods;
 using Penumbra.Mods.Manager;
 using Penumbra.Services;
@@ -525,24 +529,57 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     {
         if (_filterType == 4 && _modFilter.Lower.Contains(','))
         {
-            Penumbra.Log.Debug("--------");
+            Penumbra.Log.Debug("----" + mod.Name);
+            //split the tags by ,
             string[] t = _modFilter.Lower.Split(',');
-            var containsElements = false;
-            Penumbra.Log.Debug(t.Stringify());
-
-            var mtags = mod.LocalTags.ToArray();
-            for( int i = 0; i < mtags.Length; i++)
+            var mtags = mod.LocalTags.Select(s => s.ToLower()).ToArray();
+            var changedItemTypes = new List<string>();
+            //(obj as EquipItem)?.Type.ToSlot().ToName()
+            foreach(var ei in mod.ChangedItems.Values)
             {
-                mtags[i] = mtags[i].ToLower();
+                if (ei is not null && ei.GetType().Name == "EquipItem")
+                {
+                    EquipItem it = (EquipItem)ei;
+                    Penumbra.Log.Debug(it.Type.ToSlot().ToName());
+                    changedItemTypes.Add(it.Type.ToSlot().ToName().ToLower());
+                    
+                }
+                    
             }
 
-            foreach (string s in t)
-            {
-                Penumbra.Log.Debug("slower: "+ s.ToLower());
-                if (!mtags.Contains(s))
-                    containsElements = true;
-            }
-            return containsElements;
+            //for(var i  = 0; i < mod.ChangedItems.Values.Count();)
+            //{
+                
+            //    //if ((EquipItem)mod.ChangedItems.Values.ToArray()[i] is null)
+            //    //{
+            //    //    Penumbra.Log.Debug("----" + mod.Name);
+            //    //    Penumbra.Log.Debug(mod.ChangedItems.Values.Stringify());
+            //    //    //foreach (EquipItem ei in mod.ChangedItems.Values)
+            //    //    //{
+            //    //    //    changedItemTypes.Add(ei.Type.ToSlot().ToName());
+            //    //    //    Penumbra.Log.Debug(ei.Type.ToSlot().ToName());
+            //    //    //}
+            //    //}
+            //}
+
+            
+
+
+
+
+            //Penumbra.Log.Debug(t.Stringify());
+            //Penumbra.Log.Debug(mtags.Stringify());
+            //Penumbra.Log.Debug(changedItemTypes.Stringify());
+            //Penumbra.Log.Debug();
+
+
+            //if all the changed item gear types match the search
+            if (changedItemTypes.Intersect(t).Count() == changedItemTypes.Count)
+                //and all the local tags match it as well
+                if (t.Intersect(mtags).Count() == t.Length)
+                    return true;
+
+            return false;
         }
 
         return _filterType switch
