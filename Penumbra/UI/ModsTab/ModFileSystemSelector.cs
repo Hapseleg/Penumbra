@@ -10,6 +10,7 @@ using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
+using Microsoft.VisualBasic;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Filesystem;
@@ -524,32 +525,66 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         return ApplyFiltersAndState((ModFileSystem.Leaf)path, out state);
     }
 
+
+
     /// <summary> Apply the string filters. </summary>
     private bool ApplyStringFilters(ModFileSystem.Leaf leaf, Mod mod)
     {
         if (_filterType == 4 && _modFilter.Lower.Contains(','))
         {
-            Penumbra.Log.Debug("----" + mod.Name);
-            //split the tags by ,
             string[] t = _modFilter.Lower.Split(',');
-            var mtags = mod.LocalTags.Select(s => s.ToLower()).ToArray();
+
+
+
+
+            List<string> lowercaseModTags = mod.LocalTags.Select(s => s.ToLower()).ToList();
+            
+
+            //var mtags = mod.LocalTags.Select(s => s.ToLower()).ToArray();
+            //if (t.Intersect(mtags).Count() == t.Length)
+            //    return false;
+
+
             var changedItemTypes = new List<string>();
             //(obj as EquipItem)?.Type.ToSlot().ToName()
             foreach(var ei in mod.ChangedItems.Values)
             {
-                if (ei is not null && ei.GetType().Name == "EquipItem")
+                if (ei != null && ei.GetType() == typeof(EquipItem))
                 {
-                    EquipItem it = (EquipItem)ei;
-                    Penumbra.Log.Debug(it.Type.ToSlot().ToName());
-                    changedItemTypes.Add(it.Type.ToSlot().ToName().ToLower());
+                    EquipItem e = (EquipItem)ei;
+                    if (e.Valid)
+                    {
+                        Penumbra.Log.Debug("Slot: " + e.Type.ToSlot().ToName().ToLower());
+                        changedItemTypes.Add(e.Type.ToSlot().ToName().ToLower());
+                    }
+
+                    //Penumbra.Log.Debug("----" + mod.Name);
+                    //Penumbra.Log.Debug(mod.ChangedItems.Stringify());
                     
                 }
+                //if (ei is not null && ei.GetType().Name == "EquipItem")
+                //{
+                //    EquipItem it = (EquipItem)ei;
+                //    Penumbra.Log.Debug(it.Type.ToSlot().ToName());
+                //    changedItemTypes.Add(it.Type.ToSlot().ToName().ToLower());
                     
+                //}
+                    
+            }
+
+            foreach (var s in t)
+            {
+                //if (lowercaseModTags.IndexOf(s) != -1 || changedItemTypes.IndexOf(s) != -1)
+                //    return true;
+
+                //still find nsfw when searching for sfw
+                if (!lowercaseModTags.Contains(s) && !changedItemTypes.Contains(s))
+                    return true;
             }
 
             //for(var i  = 0; i < mod.ChangedItems.Values.Count();)
             //{
-                
+
             //    //if ((EquipItem)mod.ChangedItems.Values.ToArray()[i] is null)
             //    //{
             //    //    Penumbra.Log.Debug("----" + mod.Name);
@@ -562,7 +597,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             //    //}
             //}
 
-            
+
 
 
 
@@ -571,13 +606,19 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             //Penumbra.Log.Debug(mtags.Stringify());
             //Penumbra.Log.Debug(changedItemTypes.Stringify());
             //Penumbra.Log.Debug();
+            //Penumbra.Log.Debug("----" + mod.Name);
+            //Penumbra.Log.Debug(t.Stringify());
+            //Penumbra.Log.Debug(changedItemTypes.Stringify());
+            //Penumbra.Log.Debug(mtags.Stringify());
 
+            //Penumbra.Log.Debug((changedItemTypes.Intersect(t).Count()).ToString());
+            //Penumbra.Log.Debug((t.Intersect(mtags).Count()).ToString());
 
             //if all the changed item gear types match the search
-            if (changedItemTypes.Intersect(t).Count() == changedItemTypes.Count)
-                //and all the local tags match it as well
-                if (t.Intersect(mtags).Count() == t.Length)
-                    return true;
+            //if (changedItemTypes.Intersect(t).Count() == changedItemTypes.Count)
+            //    return false;
+            //and all the local tags match it as well
+            
 
             return false;
         }
