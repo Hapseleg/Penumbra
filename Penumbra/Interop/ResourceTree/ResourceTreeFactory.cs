@@ -4,7 +4,6 @@ using Dalamud.Data;
 using Dalamud.Game.ClientState.Objects;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Penumbra.GameData;
 using Penumbra.GameData.Actors;
 using Penumbra.Interop.PathResolving;
 using Penumbra.Services;
@@ -74,7 +73,7 @@ public class ResourceTreeFactory
         var (name, related) = GetCharacterName(character, cache);
         var tree = new ResourceTree(name, (nint)gameObjStruct, related, collectionResolveData.ModCollection.Name);
         var globalContext = new GlobalResolveContext(_config, _identifier.AwaitedService, cache, collectionResolveData.ModCollection,
-            ((Character*)gameObjStruct)->ModelCharaId, withNames);
+            ((Character*)gameObjStruct)->CharacterData.ModelCharaId, withNames);
         tree.LoadResources(globalContext);
         return tree;
     }
