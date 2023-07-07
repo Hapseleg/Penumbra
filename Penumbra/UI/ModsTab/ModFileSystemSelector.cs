@@ -483,6 +483,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
                     'C' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 3),
                     't' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 4),
                     'T' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 4),
+                    'm' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 5),
+                    'M' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 5),
                     _   => (new LowerString(filterValue), 0),
                 },
             _ => (new LowerString(filterValue), 0),
@@ -525,104 +527,9 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         return ApplyFiltersAndState((ModFileSystem.Leaf)path, out state);
     }
 
-
-
     /// <summary> Apply the string filters. </summary>
     private bool ApplyStringFilters(ModFileSystem.Leaf leaf, Mod mod)
     {
-        if (_filterType == 4 && _modFilter.Lower.Contains(','))
-        {
-            string[] t = _modFilter.Lower.Split(',');
-
-
-
-
-            List<string> lowercaseModTags = mod.LocalTags.Select(s => s.ToLower()).ToList();
-            
-
-            //var mtags = mod.LocalTags.Select(s => s.ToLower()).ToArray();
-            //if (t.Intersect(mtags).Count() == t.Length)
-            //    return false;
-
-
-            var changedItemTypes = new List<string>();
-            //(obj as EquipItem)?.Type.ToSlot().ToName()
-            foreach(var ei in mod.ChangedItems.Values)
-            {
-                if (ei != null && ei.GetType() == typeof(EquipItem))
-                {
-                    EquipItem e = (EquipItem)ei;
-                    if (e.Valid)
-                    {
-                        Penumbra.Log.Debug("Slot: " + e.Type.ToSlot().ToName().ToLower());
-                        changedItemTypes.Add(e.Type.ToSlot().ToName().ToLower());
-                    }
-
-                    //Penumbra.Log.Debug("----" + mod.Name);
-                    //Penumbra.Log.Debug(mod.ChangedItems.Stringify());
-                    
-                }
-                //if (ei is not null && ei.GetType().Name == "EquipItem")
-                //{
-                //    EquipItem it = (EquipItem)ei;
-                //    Penumbra.Log.Debug(it.Type.ToSlot().ToName());
-                //    changedItemTypes.Add(it.Type.ToSlot().ToName().ToLower());
-                    
-                //}
-                    
-            }
-
-            foreach (var s in t)
-            {
-                //if (lowercaseModTags.IndexOf(s) != -1 || changedItemTypes.IndexOf(s) != -1)
-                //    return true;
-
-                //still find nsfw when searching for sfw
-                if (!lowercaseModTags.Contains(s) && !changedItemTypes.Contains(s))
-                    return true;
-            }
-
-            //for(var i  = 0; i < mod.ChangedItems.Values.Count();)
-            //{
-
-            //    //if ((EquipItem)mod.ChangedItems.Values.ToArray()[i] is null)
-            //    //{
-            //    //    Penumbra.Log.Debug("----" + mod.Name);
-            //    //    Penumbra.Log.Debug(mod.ChangedItems.Values.Stringify());
-            //    //    //foreach (EquipItem ei in mod.ChangedItems.Values)
-            //    //    //{
-            //    //    //    changedItemTypes.Add(ei.Type.ToSlot().ToName());
-            //    //    //    Penumbra.Log.Debug(ei.Type.ToSlot().ToName());
-            //    //    //}
-            //    //}
-            //}
-
-
-
-
-
-
-            //Penumbra.Log.Debug(t.Stringify());
-            //Penumbra.Log.Debug(mtags.Stringify());
-            //Penumbra.Log.Debug(changedItemTypes.Stringify());
-            //Penumbra.Log.Debug();
-            //Penumbra.Log.Debug("----" + mod.Name);
-            //Penumbra.Log.Debug(t.Stringify());
-            //Penumbra.Log.Debug(changedItemTypes.Stringify());
-            //Penumbra.Log.Debug(mtags.Stringify());
-
-            //Penumbra.Log.Debug((changedItemTypes.Intersect(t).Count()).ToString());
-            //Penumbra.Log.Debug((t.Intersect(mtags).Count()).ToString());
-
-            //if all the changed item gear types match the search
-            //if (changedItemTypes.Intersect(t).Count() == changedItemTypes.Count)
-            //    return false;
-            //and all the local tags match it as well
-            
-
-            return false;
-        }
-
         return _filterType switch
         {
             -1 => false,
@@ -631,8 +538,45 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             2  => !mod.Author.Contains(_modFilter),
             3  => !mod.LowerChangedItemsString.Contains(_modFilter.Lower),
             4  => !mod.AllTagsLower.Contains(_modFilter.Lower),
+            5  => !ContainsAllTagsInSearch(mod, _modFilter.Lower),
             _  => false, // Should never happen
         };
+    }
+
+    /// <summary>
+    /// Use "m:" or "M:" in the search text field to filter for mods that contains the local tags or changed items
+    /// Example: "m:sfw,hands" will look for mods that contains "sfw" and "hands"
+    /// </summary>
+    /// <param name="mod"></param>
+    /// <param name="searchText">the tags thats requested, such as "sfw,hands,legs"</param>
+    /// <returns>True if the tags are present in either localtags or changed items, false if its no where to be found</returns>
+    private bool ContainsAllTagsInSearch(Mod mod, string searchText)
+    {
+        string[] t = searchText.Split(',');
+        List<string> lowercaseModTags = mod.LocalTags.Select(s => s.ToLower()).ToList();
+
+        var changedItemTypes = new List<string>();
+        foreach (var ei in mod.ChangedItems.Values)
+        {
+            if (ei != null && ei.GetType() == typeof(EquipItem))
+            {
+                EquipItem e = (EquipItem)ei;
+                if (e.Valid)
+                {
+                    Penumbra.Log.Debug("Slot: " + e.Type.ToSlot().ToName().ToLower());
+                    changedItemTypes.Add(e.Type.ToSlot().ToName().ToLower());
+                }
+            }
+        }
+
+        foreach (var s in t)
+        {
+            if (!lowercaseModTags.Contains(s) && !changedItemTypes.Contains(s))
+                return false;
+        }
+
+        //all tags were present
+        return true;
     }
 
     /// <summary> Only get the text color for a mod if no filters are set. </summary>
