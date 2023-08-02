@@ -96,7 +96,7 @@ public sealed partial class IndividualCollections
 
                 identifiers = new[]
                 {
-                    manager.CreateRetainer(retainerName, 0),
+                    manager.CreateRetainer(retainerName, ActorIdentifier.RetainerType.Both),
                 };
                 break;
             case IdentifierType.Owned:
@@ -131,11 +131,11 @@ public sealed partial class IndividualCollections
                 ObjectKind.EventNpc  => manager.Data.ENpcs,
                 ObjectKind.Companion => manager.Data.Companions,
                 ObjectKind.MountType => manager.Data.Mounts,
-                (ObjectKind)15       => manager.Data.Ornaments,
+                ObjectKind.Ornament  => manager.Data.Ornaments,
                 _                    => throw new NotImplementedException(),
             };
             return table.Where(kvp => kvp.Value == name)
-                .Select(kvp => manager.CreateIndividualUnchecked(identifier.Type, identifier.PlayerName, identifier.HomeWorld, identifier.Kind,
+                .Select(kvp => manager.CreateIndividualUnchecked(identifier.Type, identifier.PlayerName, identifier.HomeWorld.Id, identifier.Kind,
                     kvp.Key)).ToArray();
         }
 

@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
+using Dalamud.Interface.DragDrop;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Logging;
 using ImGuiNET;
@@ -41,12 +42,13 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     private readonly CollectionManager   _collectionManager;
     private readonly TutorialService     _tutorial;
     private readonly ModImportManager    _modImportManager;
+    private readonly IDragDropManager    _dragDrop;
     public           ModSettings         SelectedSettings          { get; private set; } = ModSettings.Empty;
     public           ModCollection       SelectedSettingCollection { get; private set; } = ModCollection.Empty;
 
     public ModFileSystemSelector(KeyState keyState, CommunicatorService communicator, ModFileSystem fileSystem, ModManager modManager,
         CollectionManager collectionManager, Configuration config, TutorialService tutorial, FileDialogService fileDialog, ChatService chat,
-        ModImportManager modImportManager)
+        ModImportManager modImportManager, IDragDropManager dragDrop)
         : base(fileSystem, keyState, HandleException)
     {
         _communicator      = communicator;
@@ -57,6 +59,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         _fileDialog        = fileDialog;
         _chat              = chat;
         _modImportManager  = modImportManager;
+        _dragDrop          = dragDrop;
 
         // @formatter:off
         SubscribeRightClickFolder(EnableDescendants, 10);
@@ -88,6 +91,28 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         _communicator.ModDiscoveryStarted.Subscribe(StoreCurrentSelection, ModDiscoveryStarted.Priority.ModFileSystemSelector);
         _communicator.ModDiscoveryFinished.Subscribe(RestoreLastSelection, ModDiscoveryFinished.Priority.ModFileSystemSelector);
         OnCollectionChange(CollectionType.Current, null, _collectionManager.Active.Current, "");
+    }
+
+    private static readonly string[] ValidModExtensions = new[]
+    {
+        ".ttmp",
+        ".ttmp2",
+        ".pmp",
+        ".zip",
+        ".rar",
+        ".7z",
+    };
+
+    public new void Draw(float width)
+    {
+        _dragDrop.CreateImGuiSource("ModDragDrop", m => m.Extensions.Any(e => ValidModExtensions.Contains(e.ToLowerInvariant())), m =>
+        {
+            ImGui.TextUnformatted($"Dragging mods for import:\n\t{string.Join("\n\t", m.Files.Select(Path.GetFileName))}");
+            return true;
+        });
+        base.Draw(width);
+        if (_dragDrop.CreateImGuiTarget("ModDragDrop", out var files, out _))
+            _modImportManager.AddUnpack(files.Where(f => ValidModExtensions.Contains(Path.GetExtension(f.ToLowerInvariant()))));
     }
 
     public override void Dispose()
@@ -150,6 +175,21 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             .Push(ImGuiCol.HeaderHovered, 0x4000FFFF, leaf.Value.Favorite);
         using var id = ImRaii.PushId(leaf.Value.Index);
         ImRaii.TreeNode(leaf.Value.Name, flags).Dispose();
+        if (state.Priority != 0 && !_config.HidePrioritiesInSelector)
+        {
+            var line           = ImGui.GetItemRectMin().Y;
+            var itemPos        = ImGui.GetItemRectMax().X;
+            var maxWidth       = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+            var priorityString = $"[{state.Priority}]";
+            var requiredSize   = ImGui.CalcTextSize(priorityString).X;
+            var remainingSpace = maxWidth - itemPos;
+            var offset         = remainingSpace - requiredSize;
+            if (ImGui.GetScrollMaxY() == 0)
+                offset -= ImGui.GetStyle().ItemInnerSpacing.X;
+        
+            if (offset > ImGui.GetStyle().ItemSpacing.X)
+                ImGui.GetWindowDrawList().AddText(new Vector2(itemPos + offset, line), ColorId.SelectorPriority.Value(), priorityString);
+        }
     }
 
 
@@ -450,6 +490,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     public struct ModState
     {
         public ColorId Color;
+        public int     Priority;
     }
 
     private const StringComparison IgnoreCase   = StringComparison.OrdinalIgnoreCase;
@@ -685,10 +726,14 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     /// <summary> Combined wrapper for handling all filters and setting state. </summary>
     private bool ApplyFiltersAndState(ModFileSystem.Leaf leaf, out ModState state)
     {
-        state = new ModState { Color = ColorId.EnabledMod };
         var mod = leaf.Value;
         var (settings, collection) = _collectionManager.Active.Current[mod.Index];
 
+        state = new ModState
+        {
+            Color    = ColorId.EnabledMod,
+            Priority = settings?.Priority ?? 0,
+        };
         if (ApplyStringFilters(leaf, mod))
             return true;
 
@@ -742,8 +787,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
 
         ImGui.SetCursorPos(comboPos);
         // Draw combo button
-        using var color = ImRaii.PushColor(ImGuiCol.Button, Colors.FilterActive, !everything);
-        var rightClick = DrawFilterCombo(ref everything);
+        using var color      = ImRaii.PushColor(ImGuiCol.Button, Colors.FilterActive, !everything);
+        var       rightClick = DrawFilterCombo(ref everything);
         _tutorial.OpenTutorial(BasicTutorialSteps.ModFilters);
         if (rightClick)
         {
