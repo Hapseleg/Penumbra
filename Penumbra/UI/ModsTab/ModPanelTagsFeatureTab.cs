@@ -9,6 +9,7 @@ using Dalamud.Logging;
 using System.Linq;
 using Penumbra.UI.Classes;
 using Penumbra.Mods;
+using Penumbra.Services;
 
 namespace Penumbra.UI.ModsTab;
 
@@ -17,22 +18,29 @@ public class ModPanelTagsFeatureTab : ITab
     private readonly ModFileSystemSelector _selector;
     private readonly TutorialService _tutorial;
     private readonly ModManager _modManager;
+    private readonly SaveService _saveService;
+    private readonly ModPersonalTags _modPersonalTags;
+
     private readonly TagButtons _localTags = new();
     //Contains the tags
-    private List<(string Name, List<string> Tags)> _tagsList = new();
-
+    private List<(string Name, List<string> Tags)> _tagsList;
+    //private List<(string Category, List<string> Tags)> _personalTags;
     private List<string> _personalTagsTest = new();
     private List<string> _personalTagsTestButtons = new();
     private string _newTag = string.Empty;
 
-    public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager)
+    public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager, SaveService saveService, ModPersonalTags modPersonalTags)
     {
         _selector = selector;
         _tutorial = tutorial;
         _modManager = modManager;
+        _saveService = saveService;
+        _modPersonalTags = modPersonalTags;
 
+        _tagsList = new();
+        _personalTags = new();
         //_personalTagsTest.Add("abe");
-        
+
         AddTagsToList();
     }
 
@@ -57,22 +65,6 @@ public class ModPanelTagsFeatureTab : ITab
         if (ImGui.TreeNode("Personal Tags"))
         {
             AddContextForLeafs(_personalTagsTest, ref _newTag);
-            //if (ImGui.BeginPopupContextItem())
-            //{
-
-            //    ImGui.Text("Add new Category.");
-            //    ImGui.InputText("##edit", ref newTag, 128);
-
-            //    if (ImGui.Button("Add"))
-            //    {
-            //        _personalTagsTest.Add(newTag);
-            //        newTag = string.Empty;
-            //        ImGui.EndPopup();
-            //    }
-
-            //    ImGui.EndPopup();
-            //}
-
             for (var i = 0; i < _personalTagsTest.Count; i++)
             {
                 if (ImGui.TreeNode(_personalTagsTest[i], _personalTagsTest[i]))
@@ -92,35 +84,20 @@ public class ModPanelTagsFeatureTab : ITab
                         else
                         {
                             using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                            //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                            //Clicking the button removes the tag from the localTags list
                             if (ImGui.Button(tag))
                             {
                                 RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
                             }
                             //color.Pop();
                         }
-                        //ImGui.Unindent(ImGui.GetTreeNodeToLabelSpacing());
                         ImGui.SameLine();
 
 
                     }
-                    //AddContextForLeafs();
-                    //PluginLog.Debug(_personalTagsTest[i].ToString());
 
                     ImGui.TreePop();
                 }
             }
-
-            //foreach (var personalTag in _personalTagsTest)
-            //{
-            //    if (ImGui.TreeNode(personalTag))
-            //    {
-            //        PluginLog.Debug(_personalTagsTest.Count.ToString());
-
-            //        ImGui.TreePop();
-            //    }
-            //}
 
             ImGui.TreePop();
         }
@@ -210,7 +187,6 @@ public class ModPanelTagsFeatureTab : ITab
     {
         if (ImGui.BeginPopupContextItem())
         {
-
             ImGui.Text("Add new Category.");
             ImGui.InputText("##edit", ref tag, 128);
 
@@ -283,7 +259,9 @@ public class ModPanelTagsFeatureTab : ITab
         List<string> tagGenre = new List<string>
         {
             "Gear",
-            "Animation"
+            "Animation",
+            "Minion",
+            "Body"
         };
         List<string> gearTagTypes = new List<string>
         {
@@ -306,6 +284,7 @@ public class ModPanelTagsFeatureTab : ITab
             "Dress",
             "Garterbelt",
             "Heels",
+            "Jeans",
             "Lingerie",
             "Sandals",
             "Skirt",
@@ -336,6 +315,7 @@ public class ModPanelTagsFeatureTab : ITab
         List<string> gearMaterial = new List<string>
         {
             "Cotton",
+            "Denim",
             "Leather",
             "Latex",
             "Metal",
