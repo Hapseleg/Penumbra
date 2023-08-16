@@ -19,7 +19,7 @@ public class ModPanelTagsFeatureTab : ITab
     private readonly TutorialService _tutorial;
     private readonly ModManager _modManager;
     private readonly SaveService _saveService;
-    private readonly ModPersonalTags _modPersonalTags;
+    //private readonly ModPersonalTags _modPersonalTags;
 
     private readonly TagButtons _localTags = new();
     //Contains the tags
@@ -29,16 +29,16 @@ public class ModPanelTagsFeatureTab : ITab
     private List<string> _personalTagsTestButtons = new();
     private string _newTag = string.Empty;
 
-    public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager, SaveService saveService, ModPersonalTags modPersonalTags)
+    //public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager, SaveService saveService, ModPersonalTags modPersonalTags)
+    public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager, SaveService saveService)
     {
         _selector = selector;
         _tutorial = tutorial;
         _modManager = modManager;
         _saveService = saveService;
-        _modPersonalTags = modPersonalTags;
 
         _tagsList = new();
-        _personalTags = new();
+        //_personalTags = new();
         //_personalTagsTest.Add("abe");
 
         AddTagsToList();
