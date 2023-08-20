@@ -24,6 +24,7 @@ public class ModPanelTagsFeatureTab : ITab
     private readonly ModPersonalTags _modPersonalTags;
 
     private readonly TagButtons _localTags = new();
+    private readonly bool _searchMode;
     //Contains the tags
     private List<(string Name, List<string> Tags)> _tagsList;
     private string _newTag = string.Empty;
@@ -38,7 +39,7 @@ public class ModPanelTagsFeatureTab : ITab
         _modPersonalTags = new ModPersonalTags();
 
         _tagsList = new();
-
+        _searchMode = false;
         
 
         AddTagsToList();
@@ -59,7 +60,13 @@ public class ModPanelTagsFeatureTab : ITab
 
         ImGui.Separator();
 
-        if(ImGui.Button("Save personal tags"))
+        if (ImGui.Button("Test"))
+        {
+            _selector.SetFilterValue("m:sfw");
+            _selector.SetFilterDirty();
+        }
+
+        if (ImGui.Button("Save personal tags"))
         {
             Penumbra.Log.Debug(_modPersonalTags.PersonalTags.Stringify());
             _saveService.QueueSave(_modPersonalTags);
@@ -162,24 +169,7 @@ public class ModPanelTagsFeatureTab : ITab
 
         }
 
-
-
-
-
-        //-------------------------------------------------- Real stuff
-        //Maybe remove this from the description tab?
-        //var tagIdx = _localTags.Draw("Local Tags: ",
-        //    "Custom tags you can set personally that will not be exported to the mod data but only set for you.\n"
-        //  + "If the mod already contains a local tag in its own tags, the local tag will be ignored.", _selector.Selected!.LocalTags,
-        //    out var editedTag, false);
-        //_tutorial.OpenTutorial(BasicTutorialSteps.Tags);
-        //if (tagIdx >= 0)
-        //    _modManager.DataEditor.ChangeLocalTag(_selector.Selected!, tagIdx, editedTag);
-
-
-        ////Adds the buttons, right now the tags are just in a List that contains List<string>, I'd properly move the tags to a json file so its easier to add and remove tags, can also add a function so the users can add tags themselves
-        //DrawButtons(_tagsList);
-
+        
     }
 
     private void AddNewTagLeaf(string category, ref string tag)
@@ -219,40 +209,6 @@ public class ModPanelTagsFeatureTab : ITab
         }
     }
 
-    private void DrawButtons(List<(string Name, List<string> Tags)> tagList)
-    {
-        foreach (var (name, tags) in tagList)
-        {
-            ImGui.TextUnformatted(name);
-            Console.WriteLine($"Name: {name}");
-
-            foreach (var tag in tags)
-            {
-                if (!_selector.Selected!.LocalTags.Contains(tag))
-                {
-                    //Clicking the button adds the tag to the localTags list
-                    if (ImGui.Button(tag))
-                    {
-                        AddTag(tag);
-                    }
-                }
-                else
-                {
-                    using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                    //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                    //Clicking the button removes the tag from the localTags list
-                    if (ImGui.Button(tag))
-                    {
-                        RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
-                    }
-                    //color.Pop();
-                }
-                ImGui.SameLine();
-            }
-            ImGui.Separator();
-            Console.WriteLine();
-        }
-    }
 
     //Adds tag to the mods json
     private void AddTag(string tag)
@@ -349,19 +305,7 @@ public class ModPanelTagsFeatureTab : ITab
         _tagsList.Add(("Material", gearMaterial));
     }
 
-    private List<Mod> FilterModsByTags(List<Mod> modList, List<string> tagList)
-    {
-        var filteredMods = new List<Mod>();
-        List<string> lowercaseStrings = tagList.Select(s => s.ToLower()).ToList();
 
-        foreach (var mod in modList)
-        {
-            bool containsAllElements = mod.LocalTags.Intersect(lowercaseStrings).Count() == mod.LocalTags.Count;
-            PluginLog.Debug(containsAllElements+"");
-
-        }
-        return filteredMods;
-    }
 
 
 
