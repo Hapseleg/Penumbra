@@ -10,6 +10,8 @@ using System.Linq;
 using Penumbra.UI.Classes;
 using Penumbra.Mods;
 using Penumbra.Services;
+using System.Diagnostics;
+using Swan;
 
 namespace Penumbra.UI.ModsTab;
 
@@ -19,14 +21,11 @@ public class ModPanelTagsFeatureTab : ITab
     private readonly TutorialService _tutorial;
     private readonly ModManager _modManager;
     private readonly SaveService _saveService;
-    //private readonly ModPersonalTags _modPersonalTags;
+    private readonly ModPersonalTags _modPersonalTags;
 
     private readonly TagButtons _localTags = new();
     //Contains the tags
     private List<(string Name, List<string> Tags)> _tagsList;
-    //private List<(string Category, List<string> Tags)> _personalTags;
-    private List<string> _personalTagsTest = new();
-    private List<string> _personalTagsTestButtons = new();
     private string _newTag = string.Empty;
 
     //public ModPanelTagsFeatureTab(ModFileSystemSelector selector, TutorialService tutorial, ModManager modManager, SaveService saveService, ModPersonalTags modPersonalTags)
@@ -36,10 +35,11 @@ public class ModPanelTagsFeatureTab : ITab
         _tutorial = tutorial;
         _modManager = modManager;
         _saveService = saveService;
+        _modPersonalTags = new ModPersonalTags();
 
         _tagsList = new();
-        //_personalTags = new();
-        //_personalTagsTest.Add("abe");
+
+        
 
         AddTagsToList();
     }
@@ -59,20 +59,26 @@ public class ModPanelTagsFeatureTab : ITab
 
         ImGui.Separator();
 
-        //int cur = 0;
-        //ImGui.ListBox("test", ref cur, _tagsList[0].Tags.ToArray(), _tagsList[0].Tags.Count);
+        if(ImGui.Button("Save personal tags"))
+        {
+            Penumbra.Log.Debug(_modPersonalTags.PersonalTags.Stringify());
+            _saveService.QueueSave(_modPersonalTags);
+        }
+        ImGui.Separator();
+
 
         if (ImGui.TreeNode("Personal Tags"))
         {
-            AddContextForLeafs(_personalTagsTest, ref _newTag);
-            for (var i = 0; i < _personalTagsTest.Count; i++)
-            {
-                if (ImGui.TreeNode(_personalTagsTest[i], _personalTagsTest[i]))
-                {
-                    AddContextForLeafs(_personalTagsTestButtons, ref _newTag);
-                    foreach (var tag in _personalTagsTestButtons)
-                    {
+            AddNewCategoryLeaf(ref _newTag);
 
+            foreach (var (category, tags) in _modPersonalTags.PersonalTags)
+            {
+                if (ImGui.TreeNode(category))
+                {
+                    AddNewTagLeaf(category, ref _newTag);
+                    int buttons = 0;
+                    foreach (var tag in tags)
+                    {
                         if (!_selector.Selected!.LocalTags.Contains(tag))
                         {
                             //Clicking the button adds the tag to the localTags list
@@ -90,15 +96,22 @@ public class ModPanelTagsFeatureTab : ITab
                             }
                             //color.Pop();
                         }
-                        ImGui.SameLine();
 
+                        if (buttons < 9)
+                        {
+                            ImGui.SameLine();
+                            buttons++;
+                        }
+                        else
+                        {
+                            buttons = 0;
+                        }
 
                     }
-
+                    ImGui.NewLine();
                     ImGui.TreePop();
                 }
             }
-
             ImGui.TreePop();
         }
 
@@ -108,30 +121,11 @@ public class ModPanelTagsFeatureTab : ITab
         {
             foreach (var (name, tags) in _tagsList)
             {
-                //if (ImGui.BeginPopupContextItem(name))
-                //{
-                //    ImGui.Text(name);
-                //    ImGui.EndPopup();
-                //}
                 if (ImGui.TreeNode(name))
                 {
-                    //bool[] selection = new bool[tags.Count];
-                    //foreach (var tag in tags)
-                    //{
-                    //    bool containsTag = _selector.Selected!.LocalTags.Contains(tag);
-
-                    //    //selection[selection.Length] = containsTag;
-                    //    if (ImGui.Selectable(tag, containsTag))
-                    //    {
-                    //        if (containsTag)
-                    //            RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
-                    //        else
-                    //            AddTag(tag);
-                    //    }
-                    //}
+                    int buttons = 0;
                     foreach (var tag in tags)
                     {
-
                         if (!_selector.Selected!.LocalTags.Contains(tag))
                         {
                             //Clicking the button adds the tag to the localTags list
@@ -143,18 +137,23 @@ public class ModPanelTagsFeatureTab : ITab
                         else
                         {
                             using var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                            //var color = ImRaii.PushColor(ImGuiCol.Button, ColorId.SelectedCollection.Value());
-                            //Clicking the button removes the tag from the localTags list
                             if (ImGui.Button(tag))
                             {
                                 RemoveTag(_selector.Selected!.LocalTags.IndexOf(tag));
                             }
                             //color.Pop();
                         }
-                        //ImGui.Unindent(ImGui.GetTreeNodeToLabelSpacing());
-                        ImGui.SameLine();
-                        
-                        
+
+                        if (buttons < 9)
+                        {
+                            ImGui.SameLine();
+                            buttons++;
+                        }
+                        else
+                        {
+                            buttons = 0;
+                        }
+
                     }
                     ImGui.NewLine();
                     ImGui.TreePop();
@@ -183,17 +182,36 @@ public class ModPanelTagsFeatureTab : ITab
 
     }
 
-    private void AddContextForLeafs(List<string> tagList, ref string tag)
+    private void AddNewTagLeaf(string category, ref string tag)
     {
         if (ImGui.BeginPopupContextItem())
         {
-            ImGui.Text("Add new Category.");
+            ImGui.Text("Add new Tag.");
             ImGui.InputText("##edit", ref tag, 128);
 
             if (ImGui.Button("Add"))
             {
-                tagList.Add(tag);
+                int index = _modPersonalTags.PersonalTags.FindIndex(item => item.Category == category);
+                _modPersonalTags.PersonalTags[index].Tags.Add(tag);
                 tag = string.Empty;
+                ImGui.EndPopup();
+            }
+
+            ImGui.EndPopup();
+        }
+    }
+
+    private void AddNewCategoryLeaf(ref string category)
+    {
+        if (ImGui.BeginPopupContextItem())
+        {
+            ImGui.Text("Add new Category.");
+            ImGui.InputText("##edit", ref category, 128);
+
+            if (ImGui.Button("Add"))
+            {
+                _modPersonalTags.PersonalTags.Add((category, new List<string>()));
+                category = string.Empty;
                 ImGui.EndPopup();
             }
 
@@ -297,6 +315,7 @@ public class ModPanelTagsFeatureTab : ITab
             "BDSM",
             "Casual",
             "Chains",
+            "Cool",
             "Cute",
             "Daily",
             "Eastern",

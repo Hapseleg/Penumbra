@@ -16,7 +16,9 @@ public class ModPersonalTags : ISavable
 
     public ModPersonalTags()
     {
+        //TODO load personal tags here?
         PersonalTags = new List<(string Category, List<string> Tags)> ();
+        //PersonalTags.Add(("CategoryTest", new List<string>() { "Tag1","Tagtest2"}));
     }
 
     public void Save(StreamWriter writer)
@@ -33,8 +35,8 @@ public class ModPersonalTags : ISavable
             {
                 j.WriteValue(tag);
             }
+            j.WriteEnd();
         }
-        j.WriteEnd();
         j.WriteEndObject();
     }
 
