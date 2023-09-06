@@ -16,6 +16,7 @@ public class FilenameService
     public readonly string ConfigFile;
     public readonly string FilesystemFile;
     public readonly string ActiveCollectionsFile;
+    public readonly string PersonalTagsFile;
 
     public FilenameService(DalamudPluginInterface pi)
     {
@@ -25,6 +26,7 @@ public class FilenameService
         ConfigFile            = pi.ConfigFile.FullName;
         FilesystemFile        = Path.Combine(pi.GetPluginConfigDirectory(), "sort_order.json");
         ActiveCollectionsFile = Path.Combine(pi.ConfigDirectory.FullName,   "active_collections.json");
+        PersonalTagsFile = Path.Combine(pi.GetPluginConfigDirectory(), "personal_tags.json");
     }
 
     /// <summary> Obtain the path of a collection file given its name.</summary>

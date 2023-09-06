@@ -164,7 +164,8 @@ public static class ServiceManager
             .AddSingleton<ResourceWatcher>()
             .AddSingleton<ItemSwapTab>()
             .AddSingleton<ModMergeTab>()
-            .AddSingleton<ChangedItemDrawer>();
+            .AddSingleton<ChangedItemDrawer>()
+            .AddSingleton<ModPanelTagsFeatureTab>();
 
     private static IServiceCollection AddModEditor(this IServiceCollection services)
         => services.AddSingleton<ModFileCollection>()

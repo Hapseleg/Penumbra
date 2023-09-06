@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -17,6 +18,7 @@ using Penumbra.Api.Enums;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
 using Penumbra.Communication;
+using Penumbra.GameData.Structs;
 using Penumbra.Mods;
 using Penumbra.Mods.Manager;
 using Penumbra.Services;
@@ -517,6 +519,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
                     'C' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 3),
                     't' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 4),
                     'T' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 4),
+                    'm' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 5),
+                    'M' => filterValue.Length == 2 ? (LowerString.Empty, -1) : (new LowerString(filterValue[2..]), 5),
                     _   => (new LowerString(filterValue), 0),
                 },
             _ => (new LowerString(filterValue), 0),
@@ -570,8 +574,45 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             2  => !mod.Author.Contains(_modFilter),
             3  => !mod.LowerChangedItemsString.Contains(_modFilter.Lower),
             4  => !mod.AllTagsLower.Contains(_modFilter.Lower),
+            5  => !ContainsAllTagsInSearch(mod, _modFilter.Lower),
             _  => false, // Should never happen
         };
+    }
+
+    /// <summary>
+    /// Use "m:" or "M:" in the search text field to filter for mods that contains the local tags or changed items
+    /// Example: "m:sfw,hands" will look for mods that contains "sfw" and "hands"
+    /// </summary>
+    /// <param name="mod"></param>
+    /// <param name="searchText">the tags thats requested, such as "sfw,hands,legs"</param>
+    /// <returns>True if the tags are present in either localtags or changed items, false if its no where to be found</returns>
+    private bool ContainsAllTagsInSearch(Mod mod, string searchText)
+    {
+        string[] t = searchText.Split(',');
+        List<string> lowercaseModTags = mod.LocalTags.Select(s => s.ToLower()).ToList();
+
+        var changedItemTypes = new List<string>();
+        foreach (var ei in mod.ChangedItems.Values)
+        {
+            if (ei != null && ei.GetType() == typeof(EquipItem))
+            {
+                EquipItem e = (EquipItem)ei;
+                if (e.Valid)
+                {
+                    Penumbra.Log.Debug("Slot: " + e.Type.GetType().Name.ToLower());
+                    changedItemTypes.Add( e.Type.GetType().Name.ToLower());
+                }
+            }
+        }
+
+        foreach (var s in t)
+        {
+            if (!lowercaseModTags.Contains(s) && !changedItemTypes.Contains(s))
+                return false;
+        }
+
+        //all tags were present
+        return true;
     }
 
     /// <summary> Only get the text color for a mod if no filters are set. </summary>
