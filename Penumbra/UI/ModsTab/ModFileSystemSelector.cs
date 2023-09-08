@@ -18,6 +18,7 @@ using Penumbra.Api.Enums;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
 using Penumbra.Communication;
+using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using Penumbra.Mods;
 using Penumbra.Mods.Manager;
@@ -499,7 +500,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
           + "Enter c:[string] to filter for mods changing specific items.\n"
           + "Enter t:[string] to filter for mods set to specific tags.\n"
           + "Enter n:[string] to filter only for mod names and no paths.\n"
-          + "Enter a:[string] to filter for mods by specific authors.";
+          + "Enter a:[string] to filter for mods by specific authors.\n"
+          + "Enter m:[string] to filter for fancy stuff.";//TODO
     }
 
     /// <summary> Appropriately identify and set the string filter and its type. </summary>
@@ -599,8 +601,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
                 EquipItem e = (EquipItem)ei;
                 if (e.Valid)
                 {
-                    Penumbra.Log.Debug("Slot: " + e.Type.GetType().Name.ToLower());
-                    changedItemTypes.Add( e.Type.GetType().Name.ToLower());
+                    //Penumbra.Log.Debug("Slot: " + e.Type.ToName().ToLower());
+                    changedItemTypes.Add(e.Type.ToName().ToLower());
                 }
             }
         }
