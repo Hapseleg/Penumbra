@@ -1,12 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
 using Dalamud.Interface.Internal.Notifications;
 using Penumbra.Import;
+using Penumbra.Mods.Editor;
 
 namespace Penumbra.Mods.Manager;
 
@@ -57,7 +53,7 @@ public class ModImportManager : IDisposable
         if (files.Length == 0)
             return;
 
-        _import = new TexToolsImporter(files.Length, files, AddNewMod, _config, _modEditor, _modManager);
+        _import = new TexToolsImporter(files.Length, files, AddNewMod, _config, _modEditor, _modManager, _modEditor.Compactor);
     }
 
     public bool Importing

@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Numerics;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
@@ -21,7 +19,6 @@ public partial class TexToolsImporter
     private string _currentGroupName  = string.Empty;
     private string _currentOptionName = string.Empty;
     private string _currentFileName   = string.Empty;
-
 
     public void DrawProgressInfo( Vector2 size )
     {

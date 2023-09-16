@@ -7,14 +7,9 @@ using Penumbra.Interop.PathResolving;
 using Penumbra.Interop.Structs;
 using Penumbra.Meta.Manipulations;
 using Penumbra.Mods;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
+using OtterGui.Compression;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Actors;
 using Penumbra.Interop.ResourceLoading;
@@ -637,6 +632,8 @@ public class PenumbraApi : IDisposable, IPenumbraApi
             return PenumbraApiEc.FileMissing;
 
         _modManager.AddMod(dir);
+        if (_config.UseFileSystemCompression)
+            new FileCompactor(Penumbra.Log).StartMassCompact(dir.EnumerateFiles("*.*", SearchOption.AllDirectories), CompressionAlgorithm.Xpress8K);
         return PenumbraApiEc.Success;
     }
 
