@@ -1,10 +1,10 @@
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using Penumbra.Interop.Structs;
+using Penumbra.UI;
 using CustomizeData = FFXIVClientStructs.FFXIV.Client.Game.Character.CustomizeData;
 
 namespace Penumbra.Interop.ResourceTree;
@@ -12,9 +12,12 @@ namespace Penumbra.Interop.ResourceTree;
 public class ResourceTree
 {
     public readonly string                Name;
+    public readonly int                   GameObjectIndex;
     public readonly nint                  GameObjectAddress;
     public readonly nint                  DrawObjectAddress;
+    public readonly bool                  LocalPlayerRelated;
     public readonly bool                  PlayerRelated;
+    public readonly bool                  Networked;
     public readonly string                CollectionName;
     public readonly List<ResourceNode>    Nodes;
     public readonly HashSet<ResourceNode> FlatNodes;
@@ -23,15 +26,24 @@ public class ResourceTree
     public CustomizeData CustomizeData;
     public GenderRace    RaceCode;
 
-    public ResourceTree(string name, nint gameObjectAddress, nint drawObjectAddress, bool playerRelated, string collectionName)
+    public ResourceTree(string name, int gameObjectIndex, nint gameObjectAddress, nint drawObjectAddress, bool localPlayerRelated, bool playerRelated, bool networked, string collectionName)
     {
-        Name              = name;
-        GameObjectAddress = gameObjectAddress;
-        DrawObjectAddress = drawObjectAddress;
-        PlayerRelated     = playerRelated;
-        CollectionName    = collectionName;
-        Nodes             = new List<ResourceNode>();
-        FlatNodes         = new HashSet<ResourceNode>();
+        Name               = name;
+        GameObjectIndex    = gameObjectIndex;
+        GameObjectAddress  = gameObjectAddress;
+        DrawObjectAddress  = drawObjectAddress;
+        LocalPlayerRelated = localPlayerRelated;
+        Networked          = networked;
+        PlayerRelated      = playerRelated;
+        CollectionName     = collectionName;
+        Nodes              = new List<ResourceNode>();
+        FlatNodes          = new HashSet<ResourceNode>();
+    }
+
+    public void ProcessPostfix(Action<ResourceNode, ResourceNode?> action)
+    {
+        foreach (var node in Nodes)
+            node.ProcessPostfix(action, null);
     }
 
     internal unsafe void LoadResources(GlobalResolveContext globalContext)
@@ -42,7 +54,7 @@ public class ResourceTree
         // var customize = new ReadOnlySpan<byte>( character->CustomizeData, 26 );
         ModelId       = character->CharacterData.ModelCharaId;
         CustomizeData = character->DrawData.CustomizeData;
-        RaceCode      = model->GetModelType() == CharacterBase.ModelType.Human ? (GenderRace) ((Human*)model)->RaceSexId : GenderRace.Unknown;
+        RaceCode      = model->GetModelType() == CharacterBase.ModelType.Human ? (GenderRace)((Human*)model)->RaceSexId : GenderRace.Unknown;
 
         for (var i = 0; i < model->SlotCount; ++i)
         {
@@ -54,17 +66,25 @@ public class ResourceTree
             var imc     = (ResourceHandle*)model->IMCArray[i];
             var imcNode = context.CreateNodeFromImc(imc);
             if (imcNode != null)
-                Nodes.Add(globalContext.WithUiData ? imcNode.WithUIData(imcNode.Name ?? $"IMC #{i}", imcNode.Icon) : imcNode);
+            {
+                if (globalContext.WithUiData)
+                    imcNode.FallbackName = $"IMC #{i}";
+                Nodes.Add(imcNode);
+            }
 
             var mdl     = (RenderModel*)model->Models[i];
             var mdlNode = context.CreateNodeFromRenderModel(mdl);
             if (mdlNode != null)
-                Nodes.Add(globalContext.WithUiData ? mdlNode.WithUIData(mdlNode.Name ?? $"Model #{i}", mdlNode.Icon) : mdlNode);
+            {
+                if (globalContext.WithUiData)
+                    mdlNode.FallbackName = $"Model #{i}";
+                Nodes.Add(mdlNode);
+            }
         }
 
         AddSkeleton(Nodes, globalContext.CreateContext(EquipSlot.Unknown, default), model->Skeleton);
 
-        if (character->GameObject.GetObjectKind() == (byte)ObjectKind.Pc)
+        if (model->GetModelType() == CharacterBase.ModelType.Human)
             AddHumanResources(globalContext, (HumanExt*)model);
     }
 
@@ -90,16 +110,20 @@ public class ResourceTree
                     var imc     = (ResourceHandle*)subObject->IMCArray[i];
                     var imcNode = subObjectContext.CreateNodeFromImc(imc);
                     if (imcNode != null)
-                        subObjectNodes.Add(globalContext.WithUiData
-                            ? imcNode.WithUIData(imcNode.Name ?? $"{subObjectNamePrefix} #{subObjectIndex}, IMC #{i}", imcNode.Icon)
-                            : imcNode);
+                    {
+                        if (globalContext.WithUiData)
+                            imcNode.FallbackName = $"{subObjectNamePrefix} #{subObjectIndex}, IMC #{i}";
+                        subObjectNodes.Add(imcNode);
+                    }
 
                     var mdl     = (RenderModel*)subObject->Models[i];
                     var mdlNode = subObjectContext.CreateNodeFromRenderModel(mdl);
                     if (mdlNode != null)
-                        subObjectNodes.Add(globalContext.WithUiData
-                            ? mdlNode.WithUIData(mdlNode.Name ?? $"{subObjectNamePrefix} #{subObjectIndex}, Model #{i}", mdlNode.Icon)
-                            : mdlNode);
+                    {
+                        if (globalContext.WithUiData)
+                            mdlNode.FallbackName = $"{subObjectNamePrefix} #{subObjectIndex}, Model #{i}";
+                        subObjectNodes.Add(mdlNode);
+                    }
                 }
 
                 AddSkeleton(subObjectNodes, subObjectContext, subObject->Skeleton, $"{subObjectNamePrefix} #{subObjectIndex}, ");
@@ -115,11 +139,27 @@ public class ResourceTree
 
         var decalNode = context.CreateNodeFromTex((TextureResourceHandle*)human->Decal);
         if (decalNode != null)
-            Nodes.Add(globalContext.WithUiData ? decalNode.WithUIData(decalNode.Name ?? "Face Decal", decalNode.Icon) : decalNode);
+        {
+            if (globalContext.WithUiData)
+            {
+                decalNode = decalNode.Clone();
+                decalNode.FallbackName = "Face Decal";
+                decalNode.Icon         = ChangedItemDrawer.ChangedItemIcon.Customization;
+            }
+            Nodes.Add(decalNode);
+        }
 
         var legacyDecalNode = context.CreateNodeFromTex((TextureResourceHandle*)human->LegacyBodyDecal);
         if (legacyDecalNode != null)
-            Nodes.Add(globalContext.WithUiData ? legacyDecalNode.WithUIData(legacyDecalNode.Name ?? "Legacy Body Decal", legacyDecalNode.Icon) : legacyDecalNode);
+        {
+            if (globalContext.WithUiData)
+            {
+                legacyDecalNode = legacyDecalNode.Clone();
+                legacyDecalNode.FallbackName = "Legacy Body Decal";
+                legacyDecalNode.Icon         = ChangedItemDrawer.ChangedItemIcon.Customization;
+            }
+            Nodes.Add(legacyDecalNode);
+        }
     }
 
     private unsafe void AddSkeleton(List<ResourceNode> nodes, ResolveContext context, Skeleton* skeleton, string prefix = "")
@@ -131,7 +171,11 @@ public class ResourceTree
         {
             var sklbNode = context.CreateNodeFromPartialSkeleton(&skeleton->PartialSkeletons[i]);
             if (sklbNode != null)
-                nodes.Add(context.WithUiData ? sklbNode.WithUIData($"{prefix}Skeleton #{i}", sklbNode.Icon) : sklbNode);
+            {
+                if (context.WithUiData)
+                    sklbNode.FallbackName = $"{prefix}Skeleton #{i}";
+                nodes.Add(sklbNode);
+            }
         }
     }
 }

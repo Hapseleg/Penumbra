@@ -1,4 +1,3 @@
-using System.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.DragDrop;
@@ -6,7 +5,6 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using ImGuiNET;
 using OtterGui;
-using OtterGui.Compression;
 using OtterGui.Raii;
 using Penumbra.Collections.Manager;
 using Penumbra.Communication;
@@ -19,6 +17,7 @@ using Penumbra.Meta;
 using Penumbra.Mods;
 using Penumbra.Mods.Editor;
 using Penumbra.Mods.Manager;
+using Penumbra.Mods.Subclasses;
 using Penumbra.Services;
 using Penumbra.String;
 using Penumbra.String.Classes;
@@ -576,9 +575,10 @@ public partial class ModEditWindow : Window, IDisposable
         _shaderPackageTab = new FileEditor<ShpkTab>(this, gameData, config, _editor.Compactor, _fileDialog, "Shaders", ".shpk",
             () => _editor.Files.Shpk, DrawShaderPackagePanel, () => _mod?.ModPath.FullName ?? string.Empty,
             (bytes, _, _) => new ShpkTab(_fileDialog, bytes));
-        _center             = new CombinedTexture(_left, _right);
-        _textureSelectCombo = new TextureDrawer.PathSelectCombo(textures, editor);
-        _quickImportViewer =
+        _center              = new CombinedTexture(_left, _right);
+        _textureSelectCombo  = new TextureDrawer.PathSelectCombo(textures, editor);
+        _resourceTreeFactory = resourceTreeFactory;
+        _quickImportViewer   =
             new ResourceTreeViewer(_config, resourceTreeFactory, changedItemDrawer, 2, OnQuickImportRefresh, DrawQuickImportActions);
         _communicator.ModPathChanged.Subscribe(OnModPathChanged, ModPathChanged.Priority.ModEditWindow);
     }

@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using OtterGui.Tasks;
 using Penumbra.Mods.Manager;
 
@@ -9,17 +8,18 @@ public class ModBackup
 {
     /// <summary> Set when reading Config and migrating from v4 to v5. </summary>
     public static bool MigrateModBackups = false;
+
     public static bool CreatingBackup { get; private set; }
 
-    private readonly Mod           _mod;
-    public readonly  string        Name;
-    public readonly  bool          Exists;
+    private readonly Mod    _mod;
+    public readonly  string Name;
+    public readonly  bool   Exists;
 
     public ModBackup(ModExportManager modExportManager, Mod mod)
     {
-        _mod           = mod;
-        Name           = Path.Combine(modExportManager.ExportDirectory.FullName, _mod.ModPath.Name) + ".pmp";
-        Exists         = File.Exists(Name);
+        _mod   = mod;
+        Name   = Path.Combine(modExportManager.ExportDirectory.FullName, _mod.ModPath.Name) + ".pmp";
+        Exists = File.Exists(Name);
     }
 
     /// <summary> Migrate file extensions. </summary>

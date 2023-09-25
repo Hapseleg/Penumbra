@@ -454,13 +454,12 @@ public partial class ModEditWindow
         {
             UnbindFromMaterialInstances();
 
-            var instances = MaterialInfo.FindMaterials(_edit._dalamud.Objects, FilePath);
+            var instances = MaterialInfo.FindMaterials(_edit._resourceTreeFactory.GetLocalPlayerRelatedCharacters().Select(ch => ch.Address), FilePath);
 
             var foundMaterials = new HashSet<nint>();
             foreach (var materialInfo in instances)
             {
-                var drawObject = (CharacterBase*)MaterialInfo.GetDrawObject(materialInfo.Type, _edit._dalamud.Objects);
-                var material   = materialInfo.GetDrawObjectMaterial(drawObject);
+                var material = materialInfo.GetDrawObjectMaterial(_edit._dalamud.Objects);
                 if (foundMaterials.Contains((nint)material))
                     continue;
 
@@ -627,8 +626,8 @@ public partial class ModEditWindow
             var rows = Mtrl.Table;
             if (Mtrl.HasDyeTable)
             {
-                var stm         = _edit._stainService.StmFile;
-                var stainId     = (StainId)_edit._stainService.StainCombo.CurrentSelection.Key;
+                var stm     = _edit._stainService.StmFile;
+                var stainId = (StainId)_edit._stainService.StainCombo.CurrentSelection.Key;
                 for (var i = 0; i < MtrlFile.ColorTable.NumRows; ++i)
                 {
                     ref var row = ref rows[i];

@@ -7,7 +7,6 @@ using Penumbra.Interop.PathResolving;
 using Penumbra.Interop.Structs;
 using Penumbra.Meta.Manipulations;
 using Penumbra.Mods;
-using System.Diagnostics.CodeAnalysis;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using OtterGui.Compression;
 using Penumbra.Api.Enums;
@@ -23,13 +22,14 @@ using Penumbra.Import.Textures;
 using Penumbra.Interop.Services;
 using Penumbra.UI;
 using TextureType = Penumbra.Api.Enums.TextureType;
+using Penumbra.Interop.ResourceTree;
 
 namespace Penumbra.Api;
 
 public class PenumbraApi : IDisposable, IPenumbraApi
 {
     public (int, int) ApiVersion
-        => (4, 21);
+        => (4, 22);
 
     public event Action<string>? PreSettingsPanelDraw
     {
@@ -104,31 +104,33 @@ public class PenumbraApi : IDisposable, IPenumbraApi
     private ModFileSystem         _modFileSystem;
     private ConfigWindow          _configWindow;
     private TextureManager        _textureManager;
+    private ResourceTreeFactory   _resourceTreeFactory;
 
     public unsafe PenumbraApi(CommunicatorService communicator, ModManager modManager, ResourceLoader resourceLoader,
         Configuration config, CollectionManager collectionManager, DalamudServices dalamud, TempCollectionManager tempCollections,
         TempModManager tempMods, ActorService actors, CollectionResolver collectionResolver, CutsceneService cutsceneService,
         ModImportManager modImportManager, CollectionEditor collectionEditor, RedrawService redrawService, ModFileSystem modFileSystem,
-        ConfigWindow configWindow, TextureManager textureManager)
+        ConfigWindow configWindow, TextureManager textureManager, ResourceTreeFactory resourceTreeFactory)
     {
-        _communicator       = communicator;
-        _modManager         = modManager;
-        _resourceLoader     = resourceLoader;
-        _config             = config;
-        _collectionManager  = collectionManager;
-        _dalamud            = dalamud;
-        _tempCollections    = tempCollections;
-        _tempMods           = tempMods;
-        _actors             = actors;
-        _collectionResolver = collectionResolver;
-        _cutsceneService    = cutsceneService;
-        _modImportManager   = modImportManager;
-        _collectionEditor   = collectionEditor;
-        _redrawService      = redrawService;
-        _modFileSystem      = modFileSystem;
-        _configWindow       = configWindow;
-        _textureManager     = textureManager;
-        _lumina             = _dalamud.GameData.GameData;
+        _communicator        = communicator;
+        _modManager          = modManager;
+        _resourceLoader      = resourceLoader;
+        _config              = config;
+        _collectionManager   = collectionManager;
+        _dalamud             = dalamud;
+        _tempCollections     = tempCollections;
+        _tempMods            = tempMods;
+        _actors              = actors;
+        _collectionResolver  = collectionResolver;
+        _cutsceneService     = cutsceneService;
+        _modImportManager    = modImportManager;
+        _collectionEditor    = collectionEditor;
+        _redrawService       = redrawService;
+        _modFileSystem       = modFileSystem;
+        _configWindow        = configWindow;
+        _textureManager      = textureManager;
+        _resourceTreeFactory = resourceTreeFactory;
+        _lumina              = _dalamud.GameData.GameData;
 
         _resourceLoader.ResourceLoaded += OnResourceLoaded;
         _communicator.ModPathChanged.Subscribe(ModPathChangeSubscriber, ModPathChanged.Priority.Api);
@@ -145,24 +147,25 @@ public class PenumbraApi : IDisposable, IPenumbraApi
         _communicator.ModPathChanged.Unsubscribe(ModPathChangeSubscriber);
         _communicator.ModSettingChanged.Unsubscribe(OnModSettingChange);
         _communicator.CreatedCharacterBase.Unsubscribe(OnCreatedCharacterBase);
-        _lumina             = null;
-        _communicator       = null!;
-        _modManager         = null!;
-        _resourceLoader     = null!;
-        _config             = null!;
-        _collectionManager  = null!;
-        _dalamud            = null!;
-        _tempCollections    = null!;
-        _tempMods           = null!;
-        _actors             = null!;
-        _collectionResolver = null!;
-        _cutsceneService    = null!;
-        _modImportManager   = null!;
-        _collectionEditor   = null!;
-        _redrawService      = null!;
-        _modFileSystem      = null!;
-        _configWindow       = null!;
-        _textureManager     = null!;
+        _lumina              = null;
+        _communicator        = null!;
+        _modManager          = null!;
+        _resourceLoader      = null!;
+        _config              = null!;
+        _collectionManager   = null!;
+        _dalamud             = null!;
+        _tempCollections     = null!;
+        _tempMods            = null!;
+        _actors              = null!;
+        _collectionResolver  = null!;
+        _cutsceneService     = null!;
+        _modImportManager    = null!;
+        _collectionEditor    = null!;
+        _redrawService       = null!;
+        _modFileSystem       = null!;
+        _configWindow        = null!;
+        _textureManager      = null!;
+        _resourceTreeFactory = null!;
     }
 
     public event ChangedItemClick? ChangedItemClicked
@@ -633,7 +636,8 @@ public class PenumbraApi : IDisposable, IPenumbraApi
 
         _modManager.AddMod(dir);
         if (_config.UseFileSystemCompression)
-            new FileCompactor(Penumbra.Log).StartMassCompact(dir.EnumerateFiles("*.*", SearchOption.AllDirectories), CompressionAlgorithm.Xpress8K);
+            new FileCompactor(Penumbra.Log).StartMassCompact(dir.EnumerateFiles("*.*", SearchOption.AllDirectories),
+                CompressionAlgorithm.Xpress8K);
         return PenumbraApiEc.Success;
     }
 
@@ -1009,6 +1013,43 @@ public class PenumbraApi : IDisposable, IPenumbraApi
             _                   => Task.FromException(new Exception($"Invalid input value {textureType}.")),
         };
     // @formatter:on
+
+    public IReadOnlyDictionary<string, string[]>?[] GetGameObjectResourcePaths(ushort[] gameObjects)
+    {
+        var characters       = gameObjects.Select(index => _dalamud.Objects[index]).OfType<Character>();
+        var resourceTrees    = _resourceTreeFactory.FromCharacters(characters, 0);
+        var pathDictionaries = ResourceTreeApiHelper.GetResourcePathDictionaries(resourceTrees);
+
+        return Array.ConvertAll(gameObjects, obj => pathDictionaries.TryGetValue(obj, out var pathDict) ? pathDict : null);
+    }
+
+    public IReadOnlyDictionary<ushort, IReadOnlyDictionary<string, string[]>> GetPlayerResourcePaths()
+    {
+        var resourceTrees    = _resourceTreeFactory.FromObjectTable(ResourceTreeFactory.Flags.LocalPlayerRelatedOnly);
+        var pathDictionaries = ResourceTreeApiHelper.GetResourcePathDictionaries(resourceTrees);
+
+        return pathDictionaries.AsReadOnly();
+    }
+
+    public IReadOnlyDictionary<nint, (string, string, ChangedItemIcon)>?[] GetGameObjectResourcesOfType(ResourceType type, bool withUIData,
+        params ushort[] gameObjects)
+    {
+        var characters      = gameObjects.Select(index => _dalamud.Objects[index]).OfType<Character>();
+        var resourceTrees   = _resourceTreeFactory.FromCharacters(characters, withUIData ? ResourceTreeFactory.Flags.WithUiData : 0);
+        var resDictionaries = ResourceTreeApiHelper.GetResourcesOfType(resourceTrees, type);
+
+        return Array.ConvertAll(gameObjects, obj => resDictionaries.TryGetValue(obj, out var resDict) ? resDict : null);
+    }
+
+    public IReadOnlyDictionary<ushort, IReadOnlyDictionary<nint, (string, string, ChangedItemIcon)>> GetPlayerResourcesOfType(ResourceType type,
+        bool withUIData)
+    {
+        var resourceTrees = _resourceTreeFactory.FromObjectTable(ResourceTreeFactory.Flags.LocalPlayerRelatedOnly
+          | (withUIData ? ResourceTreeFactory.Flags.WithUiData : 0));
+        var resDictionaries = ResourceTreeApiHelper.GetResourcesOfType(resourceTrees, type);
+
+        return resDictionaries.AsReadOnly();
+    }
 
 
     // TODO: cleanup when incrementing API

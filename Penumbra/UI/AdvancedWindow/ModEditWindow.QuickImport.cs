@@ -7,12 +7,14 @@ using Penumbra.GameData.Files;
 using Penumbra.Interop.ResourceTree;
 using Penumbra.Mods;
 using Penumbra.Mods.Editor;
+using Penumbra.Mods.Subclasses;
 using Penumbra.String.Classes;
 
 namespace Penumbra.UI.AdvancedWindow;
 
 public partial class ModEditWindow
 {
+    private readonly ResourceTreeFactory                                       _resourceTreeFactory;
     private readonly ResourceTreeViewer                                        _quickImportViewer;
     private readonly Dictionary<FullPath, IWritable?>                          _quickImportWritables = new();
     private readonly Dictionary<(Utf8GamePath, IWritable?), QuickImportAction> _quickImportActions   = new();

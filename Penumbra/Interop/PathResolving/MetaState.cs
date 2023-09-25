@@ -1,8 +1,11 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using OtterGui.Classes;
 using Penumbra.Collections;
+using Penumbra.Api.Enums;
 using Penumbra.GameData;
 using Penumbra.GameData.Enums;
 using Penumbra.Interop.ResourceLoading;
@@ -35,7 +38,7 @@ namespace Penumbra.Interop.PathResolving;
 // RSP tail entries seem to be obtained by "E8 ?? ?? ?? ?? 0F 28 F0 48 8B 05"
 // RSP bust size entries seem to be obtained by  "E8 ?? ?? ?? ?? F2 0F 10 44 24 ?? 8B 44 24 ?? F2 0F 11 45 ?? 89 45 ?? 83 FF"
 // they all are called by many functions, but the most relevant seem to be Human.SetupFromCharacterData, which is only called by CharacterBase.Create,
-// ChangeCustomize and RspSetupCharacter, which is hooked here.
+// ChangeCustomize and RspSetupCharacter, which is hooked here, as well as Character.CalculateHeight.
 
 // GMP Entries seem to be only used by "48 8B ?? 53 55 57 48 83 ?? ?? 48 8B", which has a DrawObject as its first parameter.
 public unsafe class MetaState : IDisposable
@@ -73,6 +76,7 @@ public unsafe class MetaState : IDisposable
         _setupVisorHook.Enable();
         _rspSetupCharacterHook.Enable();
         _changeCustomize.Enable();
+        _calculateHeightHook.Enable();
         _gameEventManager.CreatingCharacterBase += OnCreatingCharacterBase;
         _gameEventManager.CharacterBaseCreated  += OnCharacterBaseCreated;
     }
@@ -117,6 +121,7 @@ public unsafe class MetaState : IDisposable
         _setupVisorHook.Dispose();
         _rspSetupCharacterHook.Dispose();
         _changeCustomize.Dispose();
+        _calculateHeightHook.Dispose();
         _gameEventManager.CreatingCharacterBase -= OnCreatingCharacterBase;
         _gameEventManager.CharacterBaseCreated  -= OnCharacterBaseCreated;
     }
@@ -239,6 +244,19 @@ public unsafe class MetaState : IDisposable
             using var cmp         = resolveData.ModCollection.TemporarilySetCmpFile(_characterUtility);
             _rspSetupCharacterHook.Original(drawObject, unk2, unk3, unk4, unk5);
         }
+    }
+
+    private delegate ulong CalculateHeightDelegate(Character* character);
+
+    // TODO: use client structs
+    [Signature(Sigs.CalculateHeight, DetourName = nameof(CalculateHeightDetour))]
+    private readonly Hook<CalculateHeightDelegate> _calculateHeightHook = null!;
+
+    private ulong CalculateHeightDetour(Character* character)
+    {
+        var       resolveData = _collectionResolver.IdentifyCollection((GameObject*)character, true);
+        using var cmp         = resolveData.ModCollection.TemporarilySetCmpFile(_characterUtility);
+        return _calculateHeightHook.Original(character);
     }
 
     private delegate bool ChangeCustomizeDelegate(nint human, nint data, byte skipEquipment);
