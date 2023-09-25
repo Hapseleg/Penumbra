@@ -1,10 +1,7 @@
 using Penumbra.Mods;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Penumbra.Mods.Manager;
 using Penumbra.Collections.Manager;
+using Penumbra.Mods.Subclasses;
 using Penumbra.Services;
 
 namespace Penumbra.Collections;
@@ -134,7 +131,7 @@ public partial class ModCollection
     }
 
     /// <summary> Constructor for temporary collections. </summary>
-    public static ModCollection CreateTemporary(string name, int index, int changeCounter) 
+    public static ModCollection CreateTemporary(string name, int index, int changeCounter)
     {
         Debug.Assert(index < 0, "Temporary collection created with non-negative index.");
         var ret = new ModCollection(name, index, changeCounter, CurrentVersion, new List<ModSettings?>(), new List<ModCollection>(),
@@ -146,7 +143,8 @@ public partial class ModCollection
     public static ModCollection CreateEmpty(string name, int index, int modCount)
     {
         Debug.Assert(index >= 0, "Empty collection created with negative index.");
-        return new ModCollection(name, index, 0, CurrentVersion, Enumerable.Repeat((ModSettings?) null, modCount).ToList(), new List<ModCollection>(),
+        return new ModCollection(name, index, 0, CurrentVersion, Enumerable.Repeat((ModSettings?)null, modCount).ToList(),
+            new List<ModCollection>(),
             new Dictionary<string, ModSettings.SavedSettings>());
     }
 

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Dalamud.Interface.Internal.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -412,19 +408,15 @@ public class ActiveCollections : ISavable, IDisposable
     public static bool Load(FilenameService fileNames, out JObject ret)
     {
         var file = fileNames.ActiveCollectionsFile;
-        if (File.Exists(file))
-            try
-            {
-                ret = JObject.Parse(File.ReadAllText(file));
-                return true;
-            }
-            catch (Exception e)
-            {
-                Penumbra.Log.Error($"Could not read active collections from file {file}:\n{e}");
-            }
+        var jObj = BackupService.GetJObjectForFile(fileNames, file);
+        if (jObj == null)
+        {
+            ret = new JObject();
+            return false;
+        }
 
-        ret = new JObject();
-        return false;
+        ret = jObj;
+        return true;
     }
 
     public string RedundancyCheck(CollectionType type, ActorIdentifier id)
@@ -446,6 +438,7 @@ public class ActiveCollections : ISavable, IDisposable
                     var m = ByType(CollectionTypeExtensions.FromParts(race, Gender.Male, false));
                     if (m != null && m != yourself)
                         return string.Empty;
+
                     var f = ByType(CollectionTypeExtensions.FromParts(race, Gender.Female, false));
                     if (f != null && f != yourself)
                         return string.Empty;
@@ -454,26 +447,28 @@ public class ActiveCollections : ISavable, IDisposable
                 }
 
                 var racialString = racial ? " and Racial Assignments" : string.Empty;
-                var @base  = ByType(CollectionType.Default);
-                var male   = ByType(CollectionType.MalePlayerCharacter);
-                var female = ByType(CollectionType.FemalePlayerCharacter);
+                var @base        = ByType(CollectionType.Default);
+                var male         = ByType(CollectionType.MalePlayerCharacter);
+                var female       = ByType(CollectionType.FemalePlayerCharacter);
                 if (male == yourself && female == yourself)
                     return
                         $"Assignment is redundant due to overwriting Male Players and Female Players{racialString} with an identical collection.\nYou can remove it.";
-                
+
                 if (male == null)
                 {
                     if (female == null && @base == yourself)
-                        return $"Assignment is redundant due to overwriting Base{racialString} with an identical collection.\nYou can remove it.";
+                        return
+                            $"Assignment is redundant due to overwriting Base{racialString} with an identical collection.\nYou can remove it.";
                     if (female == yourself && @base == yourself)
                         return
                             $"Assignment is redundant due to overwriting Base and Female Players{racialString} with an identical collection.\nYou can remove it.";
                 }
                 else if (male == yourself && female == null && @base == yourself)
                 {
-                    return $"Assignment is redundant due to overwriting Base and Male Players{racialString} with an identical collection.\nYou can remove it.";
+                    return
+                        $"Assignment is redundant due to overwriting Base and Male Players{racialString} with an identical collection.\nYou can remove it.";
                 }
-                
+
                 break;
             // Check individual assignments. We can only be sure of redundancy for world-overlap or ownership overlap.
             case CollectionType.Individual:

@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -28,8 +25,8 @@ public unsafe class IdentifiedCollectionCache : IDisposable, IEnumerable<(nint A
         _events       = events;
 
         _communicator.CollectionChange.Subscribe(CollectionChangeClear, CollectionChange.Priority.IdentifiedCollectionCache);
-        _clientState.TerritoryChanged        += TerritoryClear;
-        _events.CharacterDestructor          += OnCharacterDestruct;
+        _clientState.TerritoryChanged += TerritoryClear;
+        _events.CharacterDestructor   += OnCharacterDestruct;
     }
 
     public ResolveData Set(ModCollection collection, ActorIdentifier identifier, GameObject* data)
@@ -64,8 +61,8 @@ public unsafe class IdentifiedCollectionCache : IDisposable, IEnumerable<(nint A
     public void Dispose()
     {
         _communicator.CollectionChange.Unsubscribe(CollectionChangeClear);
-        _clientState.TerritoryChanged        -= TerritoryClear;
-        _events.CharacterDestructor          -= OnCharacterDestruct;
+        _clientState.TerritoryChanged -= TerritoryClear;
+        _events.CharacterDestructor   -= OnCharacterDestruct;
     }
 
     public IEnumerator<(nint Address, ActorIdentifier Identifier, ModCollection Collection)> GetEnumerator()

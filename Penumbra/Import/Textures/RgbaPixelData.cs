@@ -1,4 +1,3 @@
-using System;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -14,8 +13,7 @@ public readonly record struct RgbaPixelData(int Width, int Height, byte[] PixelD
 
     public RgbaPixelData((int Width, int Height) size, byte[] pixelData)
         : this(size.Width, size.Height, pixelData)
-    {
-    }
+    { }
 
     public Image<Rgba32> ToImage()
         => Image.LoadPixelData<Rgba32>(PixelData, Width, Height);

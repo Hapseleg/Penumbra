@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
@@ -211,6 +208,7 @@ public class CommandHandler : IDisposable
     {
         if (_config.MinimumSize.X == Configuration.Constants.MinimumSizeX && _config.MinimumSize.Y == Configuration.Constants.MinimumSizeY)
             return false;
+
         _config.MinimumSize.X = Configuration.Constants.MinimumSizeX;
         _config.MinimumSize.Y = Configuration.Constants.MinimumSizeY;
         _config.Save();

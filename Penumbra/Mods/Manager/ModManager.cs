@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Penumbra.Communication;
 using Penumbra.Mods.Editor;
 using Penumbra.Services;
@@ -50,7 +45,7 @@ public sealed class ModManager : ModStorage, IDisposable
         _communicator = communicator;
         DataEditor    = dataEditor;
         OptionEditor  = optionEditor;
-        Creator    = creator;
+        Creator       = creator;
         SetBaseDirectory(config.ModDirectory, true);
         _communicator.ModPathChanged.Subscribe(OnModPathChange, ModPathChanged.Priority.ModManager);
         DiscoverMods();
@@ -246,7 +241,7 @@ public sealed class ModManager : ModStorage, IDisposable
     {
         switch (type)
         {
-            case ModPathChangeType.Added: 
+            case ModPathChangeType.Added:
                 SetNew(mod);
                 break;
             case ModPathChangeType.Deleted:

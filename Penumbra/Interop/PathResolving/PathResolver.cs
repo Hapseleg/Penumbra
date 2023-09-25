@@ -1,9 +1,7 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
 using FFXIVClientStructs.FFXIV.Client.System.Resource;
+using Penumbra.Api.Enums;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
-using Penumbra.GameData.Enums;
 using Penumbra.Interop.ResourceLoading;
 using Penumbra.Interop.Structs;
 using Penumbra.String;

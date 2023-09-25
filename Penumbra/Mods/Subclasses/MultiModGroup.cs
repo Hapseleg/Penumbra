@@ -1,17 +1,11 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using Dalamud.Interface.Internal.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OtterGui;
 using OtterGui.Filesystem;
 using Penumbra.Api.Enums;
-using Penumbra.Mods.Subclasses;
 
-namespace Penumbra.Mods;
+namespace Penumbra.Mods.Subclasses;
 
 /// <summary> Groups that allow all available options to be selected at once. </summary>
 public sealed class MultiModGroup : IModGroup

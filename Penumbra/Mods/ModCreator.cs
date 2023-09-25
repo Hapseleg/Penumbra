@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using Dalamud.Interface.Internal.Notifications;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -117,9 +111,7 @@ public partial class ModCreator
         }
 
         if (changes)
-        {
             _saveService.SaveAllOptionGroups(mod, true);
-        }
     }
 
     /// <summary> Load the default option for a given mod.</summary>

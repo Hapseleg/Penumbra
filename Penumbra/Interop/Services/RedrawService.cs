@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects;
@@ -103,10 +100,10 @@ public unsafe partial class RedrawService
 
 public sealed unsafe partial class RedrawService : IDisposable
 {
-    private readonly Framework     _framework;
+    private readonly Framework      _framework;
     private readonly IObjectTable   _objects;
     private readonly ITargetManager _targets;
-    private readonly Condition     _conditions;
+    private readonly Condition      _conditions;
 
     private readonly List<int> _queue           = new(100);
     private readonly List<int> _afterGPoseQueue = new(GPoseSlots);
@@ -210,7 +207,7 @@ public sealed unsafe partial class RedrawService : IDisposable
             return;
 
         _targets.Target = actor;
-        _target = -1;
+        _target         = -1;
     }
 
     private void HandleRedraw()

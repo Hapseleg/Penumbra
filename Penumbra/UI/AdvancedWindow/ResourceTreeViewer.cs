@@ -1,19 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Threading.Tasks;
 using Dalamud.Interface;
 using ImGuiNET;
 using OtterGui.Raii;
 using OtterGui;
 using Penumbra.Interop.ResourceTree;
 using Penumbra.UI.Classes;
-using System.Linq;
 
 namespace Penumbra.UI.AdvancedWindow;
 
 public class ResourceTreeViewer
 {
+    private const ResourceTreeFactory.Flags ResourceTreeFactoryFlags =
+        ResourceTreeFactory.Flags.RedactExternalPaths |
+        ResourceTreeFactory.Flags.WithUiData |
+        ResourceTreeFactory.Flags.WithOwnership;
+
     private readonly Configuration                 _config;
     private readonly ResourceTreeFactory           _treeFactory;
     private readonly ChangedItemDrawer             _changedItemDrawer;
@@ -22,7 +22,7 @@ public class ResourceTreeViewer
     private readonly Action<ResourceNode, Vector2> _drawActions;
     private readonly HashSet<nint>                 _unfolded;
 
-    private Task<ResourceTree[]>?      _task;
+    private Task<ResourceTree[]>? _task;
 
     public ResourceTreeViewer(Configuration config, ResourceTreeFactory treeFactory, ChangedItemDrawer changedItemDrawer,
         int actionCapacity, Action onRefresh, Action<ResourceNode, Vector2> drawActions)
@@ -45,8 +45,6 @@ public class ResourceTreeViewer
         if (!child)
             return;
 
-        var textColorNonPlayer = ImGui.GetColorU32(ImGuiCol.Text);
-        var textColorPlayer    = (textColorNonPlayer & 0xFF000000u) | ((textColorNonPlayer & 0x00FEFEFE) >> 1) | 0x8000u; // Half green
         if (!_task.IsCompleted)
         {
             ImGui.NewLine();
@@ -60,17 +58,30 @@ public class ResourceTreeViewer
         }
         else if (_task.IsCompletedSuccessfully)
         {
+            var debugMode = _config.DebugMode;
             foreach (var (tree, index) in _task.Result.WithIndex())
             {
-                using (var c = ImRaii.PushColor(ImGuiCol.Text, tree.PlayerRelated ? textColorPlayer : textColorNonPlayer))
+                var headerColorId =
+                    tree.LocalPlayerRelated ? ColorId.ResTreeLocalPlayer :
+                    tree.PlayerRelated      ? ColorId.ResTreePlayer :
+                    tree.Networked          ? ColorId.ResTreeNetworked :
+                    ColorId.ResTreeNonNetworked;
+                using (var c = ImRaii.PushColor(ImGuiCol.Text, headerColorId.Value()))
                 {
-                    if (!ImGui.CollapsingHeader($"{tree.Name}##{index}", index == 0 ? ImGuiTreeNodeFlags.DefaultOpen : 0))
+                    var isOpen = ImGui.CollapsingHeader($"{tree.Name}##{index}", index == 0 ? ImGuiTreeNodeFlags.DefaultOpen : 0);
+                    if (debugMode)
+                    {
+                        using var _ = ImRaii.PushFont(UiBuilder.MonoFont);
+                        ImGuiUtil.HoverTooltip(
+                            $"Object Index:        {tree.GameObjectIndex}\nObject Address:      0x{tree.GameObjectAddress:X16}\nDraw Object Address: 0x{tree.DrawObjectAddress:X16}");
+                    }
+                    if (!isOpen)
                         continue;
                 }
 
                 using var id = ImRaii.PushId(index);
 
-                ImGui.Text($"Collection: {tree.CollectionName}");
+                ImGui.TextUnformatted($"Collection: {tree.CollectionName}");
 
                 using var table = ImRaii.Table("##ResourceTree", _actionCapacity > 0 ? 4 : 3,
                     ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg);
@@ -95,7 +106,9 @@ public class ResourceTreeViewer
         {
             try
             {
-                return _treeFactory.FromObjectTable();
+                return _treeFactory.FromObjectTable(ResourceTreeFactoryFlags)
+                    .Select(entry => entry.ResourceTree)
+                    .ToArray();
             }
             finally
             {
@@ -131,9 +144,9 @@ public class ResourceTreeViewer
                     : resourceNode.Children.Any(child => !child.Internal);
                 if (unfoldable)
                 {
-                    using var font = ImRaii.PushFont(UiBuilder.IconFont);
-                    var icon = (unfolded ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight).ToIconString();
-                    var offset = (ImGui.GetFrameHeight() - ImGui.CalcTextSize(icon).X) / 2;
+                    using var font   = ImRaii.PushFont(UiBuilder.IconFont);
+                    var       icon   = (unfolded ? FontAwesomeIcon.CaretDown : FontAwesomeIcon.CaretRight).ToIconString();
+                    var       offset = (ImGui.GetFrameHeight() - ImGui.CalcTextSize(icon).X) / 2;
                     ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
                     ImGui.TextUnformatted(icon);
                     ImGui.SameLine(0f, offset + ImGui.GetStyle().ItemInnerSpacing.X);
@@ -143,6 +156,7 @@ public class ResourceTreeViewer
                     ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
                     ImGui.SameLine(0f, ImGui.GetStyle().ItemInnerSpacing.X);
                 }
+
                 _changedItemDrawer.DrawCategoryIcon(resourceNode.Icon);
                 ImGui.SameLine(0f, ImGui.GetStyle().ItemInnerSpacing.X);
                 ImGui.TableHeader(resourceNode.Name);

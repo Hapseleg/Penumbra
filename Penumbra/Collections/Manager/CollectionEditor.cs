@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using OtterGui;
 using Penumbra.Api.Enums;
 using Penumbra.Mods;
 using Penumbra.Mods.Manager;
+using Penumbra.Mods.Subclasses;
 using Penumbra.Services;
 
 namespace Penumbra.Collections.Manager;

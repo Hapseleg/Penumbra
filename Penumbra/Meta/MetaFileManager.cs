@@ -1,9 +1,7 @@
-using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
+using OtterGui.Compression;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
 using Penumbra.GameData;
@@ -12,6 +10,7 @@ using Penumbra.Interop.Services;
 using Penumbra.Interop.Structs;
 using Penumbra.Meta.Files;
 using Penumbra.Mods;
+using Penumbra.Mods.Subclasses;
 using Penumbra.Services;
 using ResidentResourceManager = Penumbra.Interop.Services.ResidentResourceManager;
 
@@ -26,9 +25,11 @@ public unsafe class MetaFileManager
     internal readonly ActiveCollectionData    ActiveCollections;
     internal readonly ValidityChecker         ValidityChecker;
     internal readonly IdentifierService       Identifier;
+    internal readonly FileCompactor           Compactor;
 
     public MetaFileManager(CharacterUtility characterUtility, ResidentResourceManager residentResources, IDataManager gameData,
-        ActiveCollectionData activeCollections, Configuration config, ValidityChecker validityChecker, IdentifierService identifier)
+        ActiveCollectionData activeCollections, Configuration config, ValidityChecker validityChecker, IdentifierService identifier,
+        FileCompactor compactor)
     {
         CharacterUtility  = characterUtility;
         ResidentResources = residentResources;
@@ -37,6 +38,7 @@ public unsafe class MetaFileManager
         Config            = config;
         ValidityChecker   = validityChecker;
         Identifier        = identifier;
+        Compactor         = compactor;
         SignatureHelper.Initialise(this);
     }
 

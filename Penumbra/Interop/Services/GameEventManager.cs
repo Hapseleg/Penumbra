@@ -1,7 +1,6 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using Penumbra.GameData;
-using System;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Penumbra.Interop.Structs;
@@ -153,7 +152,7 @@ public unsafe class GameEventManager : IDisposable
             {
                 try
                 {
-                    ((CreatingCharacterBaseEvent)subscriber).Invoke((nint) (&a), b, c);
+                    ((CreatingCharacterBaseEvent)subscriber).Invoke((nint)(&a), b, c);
                 }
                 catch (Exception ex)
                 {
@@ -266,11 +265,13 @@ public unsafe class GameEventManager : IDisposable
     private readonly Hook<TestDelegate>? _testHook = null;
 
     private delegate void TestDelegate(nint a1, int a2);
+
     private void TestDetour(nint a1, int a2)
     {
         Penumbra.Log.Information($"Test: {a1:X} {a2}");
         _testHook!.Original(a1, a2);
     }
+
     private void EnableDebugHook()
         => _testHook?.Enable();
 

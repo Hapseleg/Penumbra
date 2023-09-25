@@ -1,7 +1,3 @@
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
 using Dalamud.Hooking;
 using Penumbra.String;
 using Penumbra.String.Classes;

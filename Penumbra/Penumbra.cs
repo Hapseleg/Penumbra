@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Text;
 using Dalamud.Plugin;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -23,6 +19,7 @@ using Penumbra.UI.Tabs;
 using ChangedItemClick = Penumbra.Communication.ChangedItemClick;
 using ChangedItemHover = Penumbra.Communication.ChangedItemHover;
 using OtterGui.Tasks;
+using Penumbra.UI;
 
 namespace Penumbra;
 

@@ -1,21 +1,22 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+﻿using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using Penumbra.Interop.Structs;
 
 namespace Penumbra.Interop.SafeHandles;
 
 public unsafe class SafeTextureHandle : SafeHandle
 {
-    public Texture* Texture => (Texture*)handle;
+    public Texture* Texture
+        => (Texture*)handle;
 
-    public override bool IsInvalid => handle == 0;
+    public override bool IsInvalid
+        => handle == 0;
 
-    public SafeTextureHandle(Texture* handle, bool incRef, bool ownsHandle = true) : base(0, ownsHandle)
+    public SafeTextureHandle(Texture* handle, bool incRef, bool ownsHandle = true)
+        : base(0, ownsHandle)
     {
         if (incRef && !ownsHandle)
             throw new ArgumentException("Non-owning SafeTextureHandle with IncRef is unsupported");
+
         if (incRef && handle != null)
             TextureUtility.IncRef(handle);
         SetHandle((nint)handle);
@@ -30,16 +31,17 @@ public unsafe class SafeTextureHandle : SafeHandle
     }
 
     public static SafeTextureHandle CreateInvalid()
-        => new(null, incRef: false);
+        => new(null, false);
 
     protected override bool ReleaseHandle()
     {
         nint handle;
         lock (this)
         {
-            handle = this.handle;
+            handle      = this.handle;
             this.handle = 0;
         }
+
         if (handle != 0)
             TextureUtility.DecRef((Texture*)handle);
 

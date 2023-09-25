@@ -1,16 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using Newtonsoft.Json.Linq;
-using Penumbra.Import;
-using Penumbra.Meta;
 using Penumbra.Meta.Manipulations;
-using Penumbra.Mods.Subclasses;
 using Penumbra.String.Classes;
 
-namespace Penumbra.Mods;
+namespace Penumbra.Mods.Subclasses;
 
 /// <summary>
 /// A sub mod is a collection of

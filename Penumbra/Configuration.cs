@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
 using Dalamud.Configuration;
 using Dalamud.Interface.Internal.Notifications;
 using Newtonsoft.Json;
@@ -11,13 +6,15 @@ using OtterGui.Classes;
 using OtterGui.Filesystem;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
-using Penumbra.GameData.Enums;
+using Penumbra.Enums;
 using Penumbra.Import.Structs;
 using Penumbra.Interop.Services;
 using Penumbra.Mods;
+using Penumbra.Mods.Manager;
 using Penumbra.Services;
 using Penumbra.UI;
 using Penumbra.UI.Classes;
+using Penumbra.UI.ResourceWatcher;
 using Penumbra.UI.Tabs;
 using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
 
@@ -99,6 +96,7 @@ public class Configuration : IPluginConfiguration, ISavable
     public bool PrintSuccessfulCommandsToChat { get; set; } = true;
     public bool FixMainWindow                 { get; set; } = false;
     public bool AutoDeduplicateOnImport       { get; set; } = true;
+    public bool UseFileSystemCompression      { get; set; } = true;
     public bool EnableHttpApi                 { get; set; } = true;
 
     public string DefaultModImportPath    { get; set; } = string.Empty;

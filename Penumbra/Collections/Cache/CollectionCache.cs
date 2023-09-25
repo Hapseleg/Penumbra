@@ -2,16 +2,11 @@ using OtterGui;
 using OtterGui.Classes;
 using Penumbra.Meta.Manipulations;
 using Penumbra.Mods;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Penumbra.Api.Enums;
 using Penumbra.Communication;
 using Penumbra.String.Classes;
 using Penumbra.Mods.Manager;
+using Penumbra.Mods.Subclasses;
 
 namespace Penumbra.Collections.Cache;
 

@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Penumbra.GameData.Actors;
@@ -50,7 +46,8 @@ public sealed partial class IndividualCollections : IReadOnlyList<(string Displa
                     return true;
 
                 // Handle generic NPC
-                var npcIdentifier = _actorService.AwaitedService.CreateIndividualUnchecked(IdentifierType.Npc, ByteString.Empty, ushort.MaxValue,
+                var npcIdentifier = _actorService.AwaitedService.CreateIndividualUnchecked(IdentifierType.Npc, ByteString.Empty,
+                    ushort.MaxValue,
                     identifier.Kind, identifier.DataId);
                 if (npcIdentifier.IsValid && _individuals.TryGetValue(npcIdentifier, out collection))
                     return true;
@@ -59,7 +56,8 @@ public sealed partial class IndividualCollections : IReadOnlyList<(string Displa
                 if (!_config.UseOwnerNameForCharacterCollection)
                     return false;
 
-                identifier = _actorService.AwaitedService.CreateIndividualUnchecked(IdentifierType.Player, identifier.PlayerName, identifier.HomeWorld.Id,
+                identifier = _actorService.AwaitedService.CreateIndividualUnchecked(IdentifierType.Player, identifier.PlayerName,
+                    identifier.HomeWorld.Id,
                     ObjectKind.None, uint.MaxValue);
                 return CheckWorlds(identifier, out collection);
             }
@@ -145,7 +143,8 @@ public sealed partial class IndividualCollections : IReadOnlyList<(string Displa
         if (_individuals.TryGetValue(identifier, out collection))
             return true;
 
-        identifier = _actorService.AwaitedService.CreateIndividualUnchecked(identifier.Type, identifier.PlayerName, ushort.MaxValue, identifier.Kind,
+        identifier = _actorService.AwaitedService.CreateIndividualUnchecked(identifier.Type, identifier.PlayerName, ushort.MaxValue,
+            identifier.Kind,
             identifier.DataId);
         if (identifier.IsValid && _individuals.TryGetValue(identifier, out collection))
             return true;

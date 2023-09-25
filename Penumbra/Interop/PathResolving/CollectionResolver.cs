@@ -1,4 +1,3 @@
-using System;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using Penumbra.Collections;
@@ -21,7 +20,7 @@ public unsafe class CollectionResolver
     private readonly HumanModelList            _humanModels;
 
     private readonly IClientState    _clientState;
-    private readonly IGameGui         _gameGui;
+    private readonly IGameGui        _gameGui;
     private readonly ActorService    _actors;
     private readonly CutsceneService _cutscenes;
 

@@ -1,4 +1,3 @@
-using System;
 using OtterGui.Classes;
 
 namespace Penumbra.Communication;
@@ -17,6 +16,7 @@ public sealed class ModDiscoveryStarted : EventWrapper<Action, ModDiscoveryStart
         /// <seealso cref="UI.ModsTab.ModFileSystemSelector.StoreCurrentSelection"/>
         ModFileSystemSelector = 200,
     }
+
     public ModDiscoveryStarted()
         : base(nameof(ModDiscoveryStarted))
     { }

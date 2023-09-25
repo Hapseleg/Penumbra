@@ -1,16 +1,11 @@
-using System;
-using System.Linq;
-using System.Numerics;
 using ImGuiNET;
 using OtterGui.Raii;
 using OtterGui;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
 using Penumbra.Collections;
-using Penumbra.Mods;
 using Penumbra.UI.Classes;
 using Dalamud.Interface.Components;
-using Dalamud.Interface;
 using Penumbra.Collections.Manager;
 using Penumbra.Mods.Manager;
 using Penumbra.Mods.Subclasses;

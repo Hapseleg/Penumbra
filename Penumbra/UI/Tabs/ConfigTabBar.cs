@@ -1,9 +1,9 @@
-using System;
 using ImGuiNET;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
 using Penumbra.Mods;
 using Penumbra.Services;
+using Watcher = Penumbra.UI.ResourceWatcher.ResourceWatcher;
 
 namespace Penumbra.UI.Tabs;
 
@@ -18,7 +18,7 @@ public class ConfigTabBar : IDisposable
     public readonly EffectiveTab    Effective;
     public readonly DebugTab        Debug;
     public readonly ResourceTab     Resource;
-    public readonly ResourceWatcher Watcher;
+    public readonly Watcher         Watcher;
     public readonly OnScreenTab     OnScreenTab;
 
     public readonly ITab[] Tabs;
@@ -27,7 +27,7 @@ public class ConfigTabBar : IDisposable
     public TabType SelectTab = TabType.None;
 
     public ConfigTabBar(CommunicatorService communicator, SettingsTab settings, ModsTab mods, CollectionsTab collections,
-        ChangedItemsTab changedItems, EffectiveTab effective, DebugTab debug, ResourceTab resource, ResourceWatcher watcher,
+        ChangedItemsTab changedItems, EffectiveTab effective, DebugTab debug, ResourceTab resource, Watcher watcher,
         OnScreenTab onScreenTab)
     {
         _communicator = communicator;

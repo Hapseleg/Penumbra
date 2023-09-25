@@ -1,6 +1,7 @@
 using Dalamud.Plugin;
 using Microsoft.Extensions.DependencyInjection;
 using OtterGui.Classes;
+using OtterGui.Compression;
 using OtterGui.Log;
 using Penumbra.Api;
 using Penumbra.Collections.Cache;
@@ -20,6 +21,7 @@ using Penumbra.UI;
 using Penumbra.UI.AdvancedWindow;
 using Penumbra.UI.Classes;
 using Penumbra.UI.ModsTab;
+using Penumbra.UI.ResourceWatcher;
 using Penumbra.UI.Tabs;
 
 namespace Penumbra.Services;
@@ -62,7 +64,8 @@ public static class ServiceManager
             .AddSingleton<BackupService>()
             .AddSingleton<CommunicatorService>()
             .AddSingleton<ChatService>()
-            .AddSingleton<SaveService>();
+            .AddSingleton<SaveService>()
+            .AddSingleton<FileCompactor>();
 
 
     private static IServiceCollection AddGameData(this IServiceCollection services)

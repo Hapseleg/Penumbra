@@ -1,4 +1,3 @@
-using System;
 using OtterGui.Classes;
 using Penumbra.Collections;
 using Penumbra.Collections.Manager;
@@ -46,7 +45,6 @@ public sealed class CollectionChange : EventWrapper<Action<CollectionType, ModCo
 
         /// <seealso cref="UI.ModsTab.ModFileSystemSelector.OnCollectionChange"/>
         ModFileSystemSelector = 0,
-
     }
 
     public CollectionChange()

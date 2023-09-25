@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Internal.Notifications;
 using Newtonsoft.Json.Linq;
@@ -30,6 +27,7 @@ public partial class IndividualCollections
     {
         if (_actorService.Valid)
             return ReadJObjectInternal(obj, storage);
+
         void Func()
         {
             if (ReadJObjectInternal(obj, storage))
@@ -38,6 +36,7 @@ public partial class IndividualCollections
             Loaded.Invoke();
             _actorService.FinishedCreation -= Func;
         }
+
         _actorService.FinishedCreation += Func;
         return false;
     }
@@ -88,6 +87,7 @@ public partial class IndividualCollections
                     NotificationType.Error);
             }
         }
+
         return changes;
     }
 

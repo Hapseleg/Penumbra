@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Numerics;
 using Dalamud.Interface;
 using ImGuiNET;
 using OtterGui;
@@ -25,7 +23,7 @@ public partial class ModEditWindow
         ret |= DrawMaterialShader(tab, disabled);
 
         ret |= DrawMaterialTextureChange(tab, disabled);
-        ret |= DrawMaterialColorSetChange(tab, disabled);
+        ret |= DrawMaterialColorTableChange(tab, disabled);
         ret |= DrawMaterialConstants(tab, disabled);
 
         ImGui.Dummy(new Vector2(ImGui.GetTextLineHeight() / 2));
@@ -42,7 +40,7 @@ public partial class ModEditWindow
         if (ImGui.Button("Reload live preview"))
             tab.BindToMaterialInstances();
 
-        if (tab.MaterialPreviewers.Count != 0 || tab.ColorSetPreviewers.Count != 0)
+        if (tab.MaterialPreviewers.Count != 0 || tab.ColorTablePreviewers.Count != 0)
             return;
 
         ImGui.SameLine();
@@ -159,6 +157,13 @@ public partial class ModEditWindow
                     ImRaii.TreeNode($"#{set.Index:D2} - {set.Name}", ImGuiTreeNodeFlags.Leaf).Dispose();
         }
 
+        using (var sets = ImRaii.TreeNode("Color Sets", ImGuiTreeNodeFlags.DefaultOpen))
+        {
+            if (sets)
+                foreach (var set in file.ColorSets)
+                    ImRaii.TreeNode($"#{set.Index:D2} - {set.Name}", ImGuiTreeNodeFlags.Leaf).Dispose();
+        }
+
         if (file.AdditionalData.Length <= 0)
             return;
 
@@ -195,7 +200,7 @@ public partial class ModEditWindow
             ImGui.TableNextColumn();
             if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Save.ToIconString(), iconSize,
                     "Save the changed mdl file.\nUse at own risk!", !info.Changed, true))
-                info.Save();
+                info.Save(_editor.Compactor);
 
             ImGui.TableNextColumn();
             if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Recycle.ToIconString(), iconSize,
