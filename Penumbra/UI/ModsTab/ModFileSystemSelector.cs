@@ -8,6 +8,7 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.DragDrop;
 using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Plugin.Services;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
@@ -43,10 +44,10 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     public           ModSettings         SelectedSettings          { get; private set; } = ModSettings.Empty;
     public           ModCollection       SelectedSettingCollection { get; private set; } = ModCollection.Empty;
 
-    public ModFileSystemSelector(KeyState keyState, CommunicatorService communicator, ModFileSystem fileSystem, ModManager modManager,
+    public ModFileSystemSelector(IKeyState keyState, CommunicatorService communicator, ModFileSystem fileSystem, ModManager modManager,
         CollectionManager collectionManager, Configuration config, TutorialService tutorial, FileDialogService fileDialog, ChatService chat,
         ModImportManager modImportManager, IDragDropManager dragDrop)
-        : base(fileSystem, keyState, HandleException, allowMultipleSelection: true)
+        : base(fileSystem, keyState, Penumbra.Log, HandleException, allowMultipleSelection: true)
     {
         _communicator      = communicator;
         _modManager        = modManager;
@@ -278,7 +279,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
                 _modImportManager.AddUnpack(f);
             }, 0, modPath, _config.AlwaysOpenDefaultImport);
     }
-    
+
     private void RenameLeafMod(ModFileSystem.Leaf leaf)
     {
         ImGui.Separator();
@@ -286,19 +287,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     }
 
     private void DeleteModButton(Vector2 size)
-    {
-        var keys = _config.DeleteModModifier.IsActive();
-        var tt = SelectedLeaf == null
-            ? "No mod selected."
-            : "Delete the currently selected mod entirely from your drive.\n"
-          + "This can not be undone.";
-        if (!keys)
-            tt += $"\nHold {_config.DeleteModModifier} while clicking to delete the mod.";
-
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Trash.ToIconString(), size, tt, SelectedLeaf == null || !keys, true)
-         && Selected != null)
-            _modManager.DeleteMod(Selected);
-    }
+        => DeleteSelectionButton(size, _config.DeleteModModifier, "mod", "mods", _modManager.DeleteMod);
 
     private void AddHelpButton(Vector2 size)
     {

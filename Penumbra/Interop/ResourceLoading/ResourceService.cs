@@ -1,8 +1,8 @@
 using Dalamud.Hooking;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.Resource;
 using Penumbra.Api.Enums;
-using Penumbra.Collections;
 using Penumbra.GameData;
 using Penumbra.Interop.Structs;
 using Penumbra.String;
@@ -16,19 +16,19 @@ public unsafe class ResourceService : IDisposable
     private readonly PerformanceTracker     _performance;
     private readonly ResourceManagerService _resourceManager;
 
-    public ResourceService(PerformanceTracker performance, ResourceManagerService resourceManager)
+    public ResourceService(PerformanceTracker performance, ResourceManagerService resourceManager, IGameInteropProvider interop)
     {
         _performance     = performance;
         _resourceManager = resourceManager;
-        SignatureHelper.Initialise(this);
+        interop.InitializeFromAttributes(this);
         _getResourceSyncHook.Enable();
         _getResourceAsyncHook.Enable();
         _resourceHandleDestructorHook.Enable();
-        _incRefHook = Hook<ResourceHandlePrototype>.FromAddress(
+        _incRefHook = interop.HookFromAddress<ResourceHandlePrototype>(
             (nint)FFXIVClientStructs.FFXIV.Client.System.Resource.Handle.ResourceHandle.MemberFunctionPointers.IncRef,
             ResourceHandleIncRefDetour);
         _incRefHook.Enable();
-        _decRefHook = Hook<ResourceHandleDecRefPrototype>.FromAddress(
+        _decRefHook = interop.HookFromAddress<ResourceHandleDecRefPrototype>(
             (nint)FFXIVClientStructs.FFXIV.Client.System.Resource.Handle.ResourceHandle.MemberFunctionPointers.DecRef,
             ResourceHandleDecRefDetour);
         _decRefHook.Enable();
@@ -110,18 +110,26 @@ public unsafe class ResourceService : IDisposable
         if (returnValue != null)
             return returnValue;
 
-        return GetOriginalResource(isSync, *categoryId, *resourceType, *resourceHash, gamePath.Path, pGetResParams, isUnk);
+        return GetOriginalResource(isSync, categoryId, resourceType, resourceHash, gamePath.Path.Path, pGetResParams, isUnk);
     }
 
-    /// <summary> Call the original GetResource function. </summary>
-    public ResourceHandle* GetOriginalResource(bool sync, ResourceCategory categoryId, ResourceType type, int hash, ByteString path,
+    private ResourceHandle* GetOriginalResource(bool sync, ResourceCategory* categoryId, ResourceType* type, int* hash, byte* path,
         GetResourceParameters* resourceParameters = null, bool unk = false)
         => sync
-            ? _getResourceSyncHook.OriginalDisposeSafe(_resourceManager.ResourceManager, &categoryId, &type, &hash, path.Path,
+            ? _getResourceSyncHook.OriginalDisposeSafe(_resourceManager.ResourceManager, categoryId, type, hash, path,
                 resourceParameters)
-            : _getResourceAsyncHook.OriginalDisposeSafe(_resourceManager.ResourceManager, &categoryId, &type, &hash, path.Path,
-                resourceParameters,
-                unk);
+            : _getResourceAsyncHook.OriginalDisposeSafe(_resourceManager.ResourceManager, categoryId, type, hash, path,
+                resourceParameters, unk);
+
+    /// <summary> Call the original GetResource function. </summary>
+    public ResourceHandle* GetOriginalResource(bool sync, ref ResourceCategory categoryId, ref ResourceType type, ref int hash, ByteString path,
+        GetResourceParameters* resourceParameters = null, bool unk = false)
+    {
+        var ptrCategory = (ResourceCategory*)Unsafe.AsPointer(ref categoryId);
+        var ptrType     = (ResourceType*)Unsafe.AsPointer(ref type);
+        var ptrHash     = (int*)Unsafe.AsPointer(ref hash);
+        return GetOriginalResource(sync, ptrCategory, ptrType, ptrHash, path.Path, resourceParameters, unk);
+    }
 
     #endregion
 
