@@ -26,14 +26,11 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
         if (_shaderPackage == null)
             throw new InvalidOperationException("Material doesn't have a shader package");
 
-        var material = (Structs.Material*)Material;
+        var material = Material;
 
-        _originalShPkFlags = material->ShaderPackageFlags;
+        _originalShPkFlags = material->ShaderFlags;
 
-        if (material->MaterialParameter->TryGetBuffer(out var materialParameter))
-            _originalMaterialParameter = materialParameter.ToArray();
-        else
-            _originalMaterialParameter = Array.Empty<float>();
+        _originalMaterialParameter = material->MaterialParameterCBuffer->TryGetBuffer().ToArray();
 
         _originalSamplerFlags = new uint[material->TextureCount];
         for (var i = 0; i < _originalSamplerFlags.Length; ++i)
@@ -46,11 +43,12 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
 
         if (reset)
         {
-            var material = (Structs.Material*)Material;
+            var material = Material;
 
-            material->ShaderPackageFlags = _originalShPkFlags;
+            material->ShaderFlags = _originalShPkFlags;
 
-            if (material->MaterialParameter->TryGetBuffer(out var materialParameter))
+            var materialParameter = material->MaterialParameterCBuffer->TryGetBuffer();
+            if (!materialParameter.IsEmpty)
                 _originalMaterialParameter.AsSpan().CopyTo(materialParameter);
 
             for (var i = 0; i < _originalSamplerFlags.Length; ++i)
@@ -71,17 +69,17 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
         if (!CheckValidity())
             return;
 
-        var constantBuffer = ((Structs.Material*)Material)->MaterialParameter;
+        var constantBuffer = Material->MaterialParameterCBuffer;
         if (constantBuffer == null)
             return;
 
-        if (!constantBuffer->TryGetBuffer(out var buffer))
+        var buffer = constantBuffer->TryGetBuffer();
+        if (buffer.IsEmpty)
             return;
 
         for (var i = 0; i < _shaderPackage->MaterialElementCount; ++i)
         {
-            // TODO fix when CS updated
-            ref var parameter = ref ((ShaderPackage.MaterialElement*) ((byte*)_shaderPackage + 0x98))[i];
+            ref var parameter = ref _shaderPackage->MaterialElementsSpan[i];
             if (parameter.CRC == parameterCrc)
             {
                 if ((parameter.Offset & 0x3) != 0
@@ -103,10 +101,10 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
         var id    = 0u;
         var found = false;
 
-        var samplers = (Structs.ShaderPackageUtility.Sampler*)_shaderPackage->Samplers;
+        var samplers = _shaderPackage->Samplers;
         for (var i = 0; i < _shaderPackage->SamplerCount; ++i)
         {
-            if (samplers[i].Crc == samplerCrc)
+            if (samplers[i].CRC == samplerCrc)
             {
                 id    = samplers[i].Id;
                 found = true;
@@ -117,7 +115,7 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
         if (!found)
             return;
 
-        var material = (Structs.Material*)Material;
+        var material = Material;
         for (var i = 0; i < material->TextureCount; ++i)
         {
             if (material->Textures[i].Id == id)
@@ -137,7 +135,7 @@ public sealed unsafe class LiveMaterialPreviewer : LiveMaterialPreviewerBase
         if (mtrlHandle == null)
             return false;
 
-        var shpkHandle = ((Structs.MtrlResource*)mtrlHandle)->ShpkResourceHandle;
+        var shpkHandle = mtrlHandle->ShaderPackageResourceHandle;
         if (shpkHandle == null)
             return false;
 
