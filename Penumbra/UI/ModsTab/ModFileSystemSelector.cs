@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,7 +34,7 @@ namespace Penumbra.UI.ModsTab;
 public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSystemSelector.ModState>
 {
     private readonly CommunicatorService _communicator;
-    private readonly MessageService         _messager;
+    private readonly MessageService      _messager;
     private readonly Configuration       _config;
     private readonly FileDialogService   _fileDialog;
     private readonly ModManager          _modManager;
@@ -45,7 +46,8 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
     public           ModCollection       SelectedSettingCollection { get; private set; } = ModCollection.Empty;
 
     public ModFileSystemSelector(IKeyState keyState, CommunicatorService communicator, ModFileSystem fileSystem, ModManager modManager,
-        CollectionManager collectionManager, Configuration config, TutorialService tutorial, FileDialogService fileDialog, MessageService messager,
+        CollectionManager collectionManager, Configuration config, TutorialService tutorial, FileDialogService fileDialog,
+        MessageService messager,
         ModImportManager modImportManager, IDragDropManager dragDrop)
         : base(fileSystem, keyState, Penumbra.Log, HandleException, allowMultipleSelection: true)
     {
@@ -55,7 +57,7 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         _config            = config;
         _tutorial          = tutorial;
         _fileDialog        = fileDialog;
-        _messager              = messager;
+        _messager          = messager;
         _modImportManager  = modImportManager;
         _dragDrop          = dragDrop;
 
@@ -175,6 +177,22 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
             .Push(ImGuiCol.HeaderHovered, 0x4000FFFF, leaf.Value.Favorite);
         using var id = ImRaii.PushId(leaf.Value.Index);
         ImRaii.TreeNode(leaf.Value.Name, flags).Dispose();
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
+        {
+            var (setting, collection) = _collectionManager.Active.Current[leaf.Value.Index];
+            if (_config.DeleteModModifier.ForcedModifier(new DoubleModifier(ModifierHotkey.Control, ModifierHotkey.Shift)).IsActive())
+            {
+                _collectionManager.Editor.SetModInheritance(_collectionManager.Active.Current, leaf.Value, true);
+            }
+            else
+            {
+                var inherited = collection != _collectionManager.Active.Current;
+                if (inherited)
+                    _collectionManager.Editor.SetModInheritance(_collectionManager.Active.Current, leaf.Value, false);
+                _collectionManager.Editor.SetModState(_collectionManager.Active.Current, leaf.Value, setting is not { Enabled: true });
+            }
+        }
+
         if (state.Priority != 0 && !_config.HidePrioritiesInSelector)
         {
             var line           = ImGui.GetItemRectMin().Y;
@@ -334,13 +352,15 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
         }
         catch (Exception e)
         {
-            _messager.NotificationMessage(e, $"Could not move newly imported mod {mod.Name} to default import folder {_config.DefaultImportFolder}.", NotificationType.Warning);
+            _messager.NotificationMessage(e,
+                $"Could not move newly imported mod {mod.Name} to default import folder {_config.DefaultImportFolder}.",
+                NotificationType.Warning);
         }
     }
 
     private void DrawHelpPopup()
     {
-        ImGuiUtil.HelpPopup("ExtendedHelp", new Vector2(1000 * UiHelpers.Scale, 36.5f * ImGui.GetTextLineHeightWithSpacing()), () =>
+        ImGuiUtil.HelpPopup("ExtendedHelp", new Vector2(1000 * UiHelpers.Scale, 38.5f * ImGui.GetTextLineHeightWithSpacing()), () =>
         {
             ImGui.Dummy(Vector2.UnitY * ImGui.GetTextLineHeight());
             ImGui.TextUnformatted("Mod Management");
@@ -370,6 +390,11 @@ public sealed class ModFileSystemSelector : FileSystemSelector<Mod, ModFileSyste
                 "enabled and conflicting with another enabled Mod on the same priority.");
             ImGuiUtil.BulletTextColored(ColorId.FolderExpanded.Value(),  "expanded mod folder.");
             ImGuiUtil.BulletTextColored(ColorId.FolderCollapsed.Value(), "collapsed mod folder");
+            indent.Pop(1);
+            ImGui.BulletText("Middle-click a mod to disable it if it is enabled or enable it if it is disabled.");
+            indent.Push();
+            ImGui.BulletText(
+                $"Holding {_config.DeleteModModifier.ForcedModifier(new DoubleModifier(ModifierHotkey.Control, ModifierHotkey.Shift))} while middle-clicking lets it inherit, discarding settings.");
             indent.Pop(1);
             ImGui.BulletText("Right-click a mod to enter its sort order, which is its name by default, possibly with a duplicate number.");
             indent.Push();
