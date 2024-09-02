@@ -58,8 +58,11 @@ public sealed class GmpMetaDrawer(ModMetaEditor editor, MetaFileManager metaFile
 
     protected override IEnumerable<(GmpIdentifier, GmpEntry)> Enumerate()
         => Editor.Gmp
-            .OrderBy(kvp => kvp.Key.SetId)
+            .OrderBy(kvp => kvp.Key.SetId.Id)
             .Select(kvp => (kvp.Key, kvp.Value));
+
+    protected override int Count
+        => Editor.Gmp.Count;
 
     private static bool DrawIdentifierInput(ref GmpIdentifier identifier)
     {

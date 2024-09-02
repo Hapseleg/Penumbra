@@ -61,10 +61,13 @@ public sealed class EqdpMetaDrawer(ModMetaEditor editor, MetaFileManager metaFil
     }
 
     protected override IEnumerable<(EqdpIdentifier, EqdpEntryInternal)> Enumerate()
-        => Editor.Eqdp.OrderBy(kvp => kvp.Key.SetId)
+        => Editor.Eqdp.OrderBy(kvp => kvp.Key.SetId.Id)
             .ThenBy(kvp => kvp.Key.GenderRace)
             .ThenBy(kvp => kvp.Key.Slot)
             .Select(kvp => (kvp.Key, kvp.Value));
+
+    protected override int Count
+        => Editor.Eqdp.Count;
 
     private static bool DrawIdentifierInput(ref EqdpIdentifier identifier)
     {

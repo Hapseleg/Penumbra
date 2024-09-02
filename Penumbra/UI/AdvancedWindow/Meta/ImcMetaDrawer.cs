@@ -142,12 +142,15 @@ public sealed class ImcMetaDrawer(ModMetaEditor editor, MetaFileManager metaFile
     protected override IEnumerable<(ImcIdentifier, ImcEntry)> Enumerate()
         => Editor.Imc
             .OrderBy(kvp => kvp.Key.ObjectType)
-            .ThenBy(kvp => kvp.Key.PrimaryId)
+            .ThenBy(kvp => kvp.Key.PrimaryId.Id)
             .ThenBy(kvp => kvp.Key.EquipSlot)
             .ThenBy(kvp => kvp.Key.BodySlot)
-            .ThenBy(kvp => kvp.Key.SecondaryId)
-            .ThenBy(kvp => kvp.Key.Variant)
+            .ThenBy(kvp => kvp.Key.SecondaryId.Id)
+            .ThenBy(kvp => kvp.Key.Variant.Id)
             .Select(kvp => (kvp.Key, kvp.Value));
+
+    protected override int Count
+        => Editor.Imc.Count;
 
     public static bool DrawObjectType(ref ImcIdentifier identifier, float width = 110)
     {
