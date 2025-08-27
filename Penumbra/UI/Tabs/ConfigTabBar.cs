@@ -23,6 +23,7 @@ public class ConfigTabBar : IDisposable, IUiService
     public readonly Watcher         Watcher;
     public readonly OnScreenTab     OnScreen;
     public readonly MessagesTab     Messages;
+    public readonly SearchTab       Search;
 
     public readonly ITab[] Tabs;
 
@@ -30,7 +31,7 @@ public class ConfigTabBar : IDisposable, IUiService
     public TabType SelectTab = TabType.None;
 
     public ConfigTabBar(CommunicatorService communicator, SettingsTab settings, ModsTab mods, CollectionsTab collections,
-        ChangedItemsTab changedItems, EffectiveTab effective, DebugTab debug, ResourceTab resource, Watcher watcher,
+        ChangedItemsTab changedItems, EffectiveTab effective, SearchTab search, DebugTab debug, ResourceTab resource, Watcher watcher,
         OnScreenTab onScreen, MessagesTab messages)
     {
         _communicator = communicator;
@@ -41,6 +42,7 @@ public class ConfigTabBar : IDisposable, IUiService
         ChangedItems = changedItems;
         Effective    = effective;
         Debug        = debug;
+        Search       = search;
         Resource     = resource;
         Watcher      = watcher;
         OnScreen     = onScreen;
@@ -53,6 +55,7 @@ public class ConfigTabBar : IDisposable, IUiService
             ChangedItems,
             Effective,
             OnScreen,
+            Search,
             Debug,
             Resource,
             Watcher,
@@ -81,6 +84,7 @@ public class ConfigTabBar : IDisposable, IUiService
             TabType.ChangedItems     => ChangedItems.Label,
             TabType.EffectiveChanges => Effective.Label,
             TabType.OnScreen         => OnScreen.Label,
+            TabType.Search           => Search.Label,
             TabType.ResourceWatcher  => Watcher.Label,
             TabType.Debug            => Debug.Label,
             TabType.ResourceManager  => Resource.Label,
@@ -97,6 +101,7 @@ public class ConfigTabBar : IDisposable, IUiService
         if (label == ChangedItems.Label) return TabType.ChangedItems;
         if (label == Effective.Label)    return TabType.EffectiveChanges;
         if (label == OnScreen.Label)     return TabType.OnScreen;
+        if (label == Search.Label)       return TabType.Search;
         if (label == Messages.Label)     return TabType.Messages;
         if (label == Watcher.Label)      return TabType.ResourceWatcher;
         if (label == Debug.Label)        return TabType.Debug;

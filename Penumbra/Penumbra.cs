@@ -95,6 +95,7 @@ public class Penumbra : IDalamudPlugin
             foreach (var service in _services.GetServicesImplementing<IAwaitedService>())
                 service.Awaiter.Wait();
 
+            _services.GetService<UI.Tabs.SearchTab>();
             SetupInterface();
             SetupApi();
 
